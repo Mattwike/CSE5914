@@ -3,6 +3,7 @@ import Home from "./Screens/Home";
 import Login from "./Screens/Login";
 import CreateAccount from "./Screens/CreateAccount";
 import Verify from './Screens/Verify';
+import Dashboard from "./Screens/dashboard";
 
 function App() {
   return (
@@ -12,6 +13,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/create-account" element={<CreateAccount />} />
         <Route path="/verify" element={<Verify />} />
+        <Route path="/dashboard" element={<Dashboard />} />
       </Routes>
     </BrowserRouter>
   );

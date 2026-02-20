@@ -124,6 +124,23 @@ async def send_verification_email(data: Data, background_tasks: BackgroundTasks)
     background_tasks.add_task(fm.send_message, message)
     return {"message": "Account created. Please check your email to verify your account."}
 
+@router.post("/login")
+async def login(data: Data):
+    crypto_manager = CryptoManager()
+    email = data.email
+    password = crypto_manager.hash_data(data.password.encode())
+    supabase: Client = create_client(Envs.SB_url, Envs.SB_key)
+    user = supabase.table("accounts").select("*").eq("email", email).execute().data
+    if not user:
+        return {"message": "Invalid email or password."}
+    user = user[0]
+    if user['password'] != password:
+        return {"message": "Invalid email or password."}
+    if not user['verified']:
+        return {"message": "Account not verified. Please check your email."}
+    
+    return {"message": "Login successful!"}
+
 @router.post("/debug")
 async def debug(data: Data):
     supabase: Client = create_client(Envs.SB_url, Envs.SB_key)
