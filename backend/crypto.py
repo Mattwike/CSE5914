@@ -4,15 +4,18 @@ from Crypto.Random import get_random_bytes
 
 class CryptoManager:
 
-    def encode_data(self, data: str, key: bytes) -> bytes:
+    def encrypt_data(self, data: str, key: bytes) -> bytes:
         #encodes the dat using Salsa20
         cipher = Salsa20.new(key=key)
         return cipher.nonce + cipher.encrypt(data.encode())
 
-    def decode_data(self, encoded_data: bytes, key: bytes, nonce: bytes) -> str:
+    def decrypt_data(self, encoded_data: bytes, key: bytes) -> str:
         #decodes data using Salsa20
+        nonce = encoded_data[:8]
+        ciphertext = encoded_data[8:]
+        
         cipher = Salsa20.new(key=key, nonce=nonce)
-        return cipher.decrypt(encoded_data).decode()
+        return cipher.decrypt(ciphertext)
 
     def hash_data(self, data: bytes) -> str:
         #Generate a BLAKE2b hash

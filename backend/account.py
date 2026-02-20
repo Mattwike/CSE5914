@@ -51,13 +51,14 @@ async def create_account(data: Data, background_tasks: BackgroundTasks):
     # Save user information to the database
     supabase: Client = create_client(Envs.SB_url, Envs.SB_key)
     uid = crypto_manager.hash_data(email.encode())
-    supabase.table("accounts").insert({"id" : uid, "email": email, "password": password}).execute()
+    encrypted_email = crypto_manager.encrypt_data(email, base64.urlsafe_b64decode(os.getenv('ENCRYPTION_KEY'))).hex()
+    supabase.table("accounts").insert({"id" : uid, "email": encrypted_email, "password": password}).execute()
 
     token = crypto_manager.generate_key(length=64)
     token_str = base64.urlsafe_b64encode(token).decode('utf-8')
-
+    token_str = crypto_manager.encrypt_data(token_str, base64.urlsafe_b64decode(os.getenv('ENCRYPTION_KEY'))).hex()
     supabase.table("account_tokens").insert({"id" : uid, "token": token_str}).execute()
-    verify_link = f"{Envs.website_url}/account/verify_token?token={token_str}&user_email={email}"
+    verify_link = f"{Envs.website_url}/account/verify_token?token={token_str}&user_email={encrypted_email}"
 
     html_body = f"""
     <p>Hello USER_FNAME USER_LNAME,</p>
@@ -92,9 +93,11 @@ async def create_account(data: Data, background_tasks: BackgroundTasks):
 async def verify_token(token: str, user_email: str):
     supabase: Client = create_client(Envs.SB_url, Envs.SB_key)
     crypto_manager = CryptoManager()
+    token = crypto_manager.decrypt_data(bytes.fromhex(token), base64.urlsafe_b64decode(os.getenv('ENCRYPTION_KEY'))).decode()
+    user_email = crypto_manager.decrypt_data(bytes.fromhex(user_email), base64.urlsafe_b64decode(os.getenv('ENCRYPTION_KEY'))).decode()
     uid = crypto_manager.hash_data(user_email.encode())
     valid_token = supabase.table("account_tokens").select("token").eq("id", uid).execute().data[0]['token']
-    print(valid_token)
+    valid_token = crypto_manager.decrypt_data(bytes.fromhex(valid_token), base64.urlsafe_b64decode(os.getenv('ENCRYPTION_KEY'))).decode()
 
     if token == valid_token:
         supabase.table("accounts").update({"verified" : True}).eq("id", uid).execute()
