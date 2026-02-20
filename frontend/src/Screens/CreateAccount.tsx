@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import type { ChangeEvent } from "react";
 import { useNavigate } from "react-router-dom";
 
+const API_BASE_URL = import.meta.env.VITE_WEBSITE_URL || "http://localhost:8000";
+
 // 1. Define the shape of your Backend response
 interface RegisterResponse {
   message: string;
@@ -21,6 +23,24 @@ const CreateAccount: React.FC = () => {
   const handlePasswordChange = (e: ChangeEvent<HTMLInputElement>) => setPassword(e.target.value);
   const handleConfirmChange = (e: ChangeEvent<HTMLInputElement>) => setConfirmPassword(e.target.value);
 
+  const debug = async (): Promise<void> => {
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/account/debug`, 
+        { method: "POST",
+          headers: {"Content-Type": "application/json",},
+          body: JSON.stringify({ email, password})        
+        }
+      );
+      if (!response.ok) throw new Error("Server error");
+      const data: RegisterResponse = await response.json();
+      alert(data.message);
+    } catch (error) {
+      console.error("Debug Error:", error);
+      alert("Failed to connect to the backend.");
+    }
+  };
+
   const handleSignUp = async (): Promise<void> => {
     if (password !== confirmPassword) {
       alert("Passwords do not match!");
@@ -30,7 +50,7 @@ const CreateAccount: React.FC = () => {
     setLoading(true);
     try {
       const response = await fetch(
-        `http://localhost:8000/account/create_account`, 
+        `${API_BASE_URL}/account/create_account`, 
         { method: "POST",
           headers: {"Content-Type": "application/json",},
           body: JSON.stringify({ email, password })        
@@ -58,6 +78,14 @@ const CreateAccount: React.FC = () => {
   return (
     <div style={styles.container}>
       <h1>Create Account</h1>
+
+      <button 
+        style={styles.button} 
+        onClick={debug} 
+        disabled={loading}
+      >
+        Debug
+      </button>
 
       <input
         style={styles.input}

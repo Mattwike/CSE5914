@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 
+const API_BASE_URL = import.meta.env.VITE_WEBSITE_URL || "http://localhost:8000";
+
 // Define an interface for your backend response
 interface VerifyResponse {
   message: string;
@@ -20,7 +22,7 @@ const Verify: React.FC = () => {
 
     const verifyToken = async () => {
       try {
-        const response = await fetch(`http://localhost:8000/verify?token=${token}`);
+        const response = await fetch(`${API_BASE_URL}/verify?token=${token}`);
         const data: VerifyResponse = await response.json();
         
         setStatus(data.message);

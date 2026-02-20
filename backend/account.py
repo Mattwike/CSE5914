@@ -22,6 +22,8 @@ class Envs:
     MAIL_FROM_NAME = os.getenv('MAIL_FROM_NAME')
     SB_url: str = os.getenv("SUPABASE_URL")
     SB_key: str = os.getenv("SUPABASE_KEY")
+    debug = os.getenv("DEBUG")
+    website_url = os.getenv("VITE_WEBSITE_URL")
 
 conf = ConnectionConfig(
     MAIL_USERNAME=Envs.MAIL_USERNAME,
@@ -43,48 +45,43 @@ async def create_account(data: Data, background_tasks: BackgroundTasks):
     crypto_manager = CryptoManager()
     password = crypto_manager.hash_data(data.password.encode())
     email = data.email
-    # if not (email.endswith("@osu.edu") or email.endswith("@buckeyemail.osu.edu")):
-    #     return {"message": "Invalid email domain. Please use an osu.edu email."}
+    if not Envs.debug and (email.endswith("@osu.edu") or email.endswith("@buckeyemail.osu.edu")):
+        return {"message": "Invalid email domain. Please use an osu.edu email."}
     
     # Save user information to the database
-    print(f"Supabase URL: {Envs.SB_url}")
-    print(f"Supabase Key: {Envs.SB_key}")
     supabase: Client = create_client(Envs.SB_url, Envs.SB_key)
-    supabase.table("accounts").insert({"email": email, "password": password}).execute()
+    uid = crypto_manager.hash_data(email.encode())
+    supabase.table("accounts").insert({"id" : uid, "email": email, "password": password}).execute()
 
     token = crypto_manager.generate_key(length=64)
     token_str = base64.urlsafe_b64encode(token).decode('utf-8')
-    uid = supabase.table("accounts").select("id").eq("email", email).execute().data[0]['id']
+
     supabase.table("account_tokens").insert({"id" : uid, "token": token_str}).execute()
-    verify_link = f"http://localhost:8000/account/verify_token?token={token}&user_email={email}"
+    verify_link = f"{Envs.website_url}/account/verify_token?token={token_str}&user_email={email}"
+
+    html_body = f"""
+    <p>Hello USER_FNAME USER_LNAME,</p>
+    <p>Thank you for creating an account with COMPANY NAME. Please click the button below to verify your account:</p>
+    <div style="margin: 20px 0;">
+        <a href="{verify_link}" 
+        style="background-color: #4CAF50; 
+                color: white; 
+                padding: 14px 25px; 
+                text-align: center; 
+                text-decoration: none; 
+                display: inline-block; 
+                border-radius: 5px; 
+                font-weight: bold;">
+            Verify Account
+        </a>
+    </div>
+    """
 
     message = MessageSchema(
-        subject="Verify Your Account",
+        subject="Verify Your Email Address",
         recipients=[email],
-        body=f"Please click the following link to verify your account: {verify_link}",
-        subtype=MessageType.plain
-    )
-
-    fm = FastMail(conf)
-    background_tasks.add_task(fm.send_message, message)
-    return {"message": "Account created. Please check your email to verify your account."}
-
-
-@router.post("/resend_verification_email")
-async def send_verification_email(data: Data, background_tasks: BackgroundTasks):
-    crypto_manager = CryptoManager()
-    email = data.email
-    if not (email.endswith("@osu.edu") or email.endswith("@buckeyemail.osu.edu")):
-        return {"message": "Invalid email domain. Please use an osu.edu email."}
-
-    token = crypto_manager.generate_key(length=64)
-    verify_link = f"http://localhost:8000/account/verify_token?token={token}&user_email={email}"
-
-    message = MessageSchema(
-        subject="Verify Your Account",
-        recipients=[email],
-        body=f"Please click the following link to verify your account: {verify_link}",
-        subtype=MessageType.plain
+        body=html_body,
+        subtype=MessageType.html
     )
 
     fm = FastMail(conf)
@@ -94,10 +91,45 @@ async def send_verification_email(data: Data, background_tasks: BackgroundTasks)
 @router.get("/verify_token")
 async def verify_token(token: str, user_email: str):
     supabase: Client = create_client(Envs.SB_url, Envs.SB_key)
-    valid_token = supabase.table("accounts").select("id, email, account_tokens(account_token)").eq("email", user_email).execute()
-    print(f"Token from database: {token}")
+    crypto_manager = CryptoManager()
+    uid = crypto_manager.hash_data(user_email.encode())
+    valid_token = supabase.table("account_tokens").select("token").eq("id", uid).execute().data[0]['token']
+    print(valid_token)
+
     if token == valid_token:
-        supabase.table("accounts").update({"verified": "True"}).eq("email", user_email).execute()
+        supabase.table("accounts").update({"verified" : True}).eq("id", uid).execute()
         return {"message": "Account verified successfully!"}
     else:
          return {"message": "Invalid or expired token."}
+    
+
+@router.post("/resend_verification_email")
+async def send_verification_email(data: Data, background_tasks: BackgroundTasks):
+    crypto_manager = CryptoManager()
+    email = data.email
+    if not (email.endswith("@osu.edu") or email.endswith("@buckeyemail.osu.edu")):
+        return {"message": "Invalid email domain. Please use an osu.edu email."}
+
+    token = crypto_manager.generate_key(length=64)
+    verify_link = f"{Envs.website_url}/account/verify_token?token={token}&user_email={email}"
+
+    message = MessageSchema(
+        subject="Verify Your Account",
+        recipients=[email],
+        body=f"Please click the following link to verify your account: {verify_link}",
+        subtype=MessageType.plain
+    )
+
+    fm = FastMail(conf)
+    background_tasks.add_task(fm.send_message, message)
+    return {"message": "Account created. Please check your email to verify your account."}
+
+@router.post("/debug")
+async def debug(data: Data):
+    supabase: Client = create_client(Envs.SB_url, Envs.SB_key)
+    crypto_manager = CryptoManager()
+    uid = crypto_manager.hash_data(data.email.encode())
+    supabase.table("account_tokens").delete().eq("id", uid).execute()
+    supabase.table("accounts").delete().eq("id", uid).execute()
+    return {"message": "Debug complete. User data deleted."}
+    
