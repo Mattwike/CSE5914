@@ -9,5 +9,6 @@ dependencies = [
     "fastapi[standard]>=0.129.0",
     "flask-cors>=6.0.2",
     "pycryptodome>=3.23.0",
+    "sqlalchemy>=2.0.47",
     "supabase>=2.27.2",
 ]
