@@ -38,7 +38,7 @@ conf = ConnectionConfig(
     VALIDATE_CERTS=True
 )
 
-router = APIRouter(prefix="/account", tags=["account"])
+router = APIRouter(prefix="/user", tags=["user"])
 
 @router.post("/create_account")
 async def create_account(data: Data, background_tasks: BackgroundTasks):
