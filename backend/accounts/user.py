@@ -1,9 +1,9 @@
 from fastapi import APIRouter, BackgroundTasks
 from fastapi_mail import FastMail, MessageSchema, ConnectionConfig, MessageType
-from crypto import CryptoManager
-from pydantic import BaseModel
+from utils.crypto import CryptoManager
 from supabase import create_client, Client
 from dotenv import load_dotenv
+from pydantic import BaseModel
 import base64
 import os
 
