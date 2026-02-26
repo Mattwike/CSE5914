@@ -1,9 +1,9 @@
 from fastapi import APIRouter, BackgroundTasks
 from fastapi_mail import FastMail, MessageSchema, ConnectionConfig, MessageType
-from crypto import CryptoManager
-from pydantic import BaseModel
+from utils.crypto import CryptoManager
 from supabase import create_client, Client
 from dotenv import load_dotenv
+from pydantic import BaseModel
 import base64
 import os
 
@@ -153,3 +153,20 @@ async def debug(data: Data):
     supabase.table("accounts").delete().eq("id", uid).execute()
     return {"message": "Debug complete. User data deleted."}
     
+
+@router.delete("/delete_account")
+async def deleteAccount(data: Data, background_tasks: BackgroundTasks):
+    pass
+
+
+@router.post("/create_event")
+async def createEvent(eventID: str, eventName: str):
+    pass
+
+@router.delete("/delete_event")
+async def deleteEvent(eventID: str, userID: str):
+    pass
+
+@router.post("modify_account")
+async def modifyAccount(columnID: str, value: str):
+    pass
