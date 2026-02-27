@@ -1,5 +1,7 @@
 from fastapi import APIRouter, BackgroundTasks
 from fastapi_mail import FastMail, MessageSchema, ConnectionConfig, MessageType
+from fastapi import HTTPException, status
+from fastapi.responses import JSONResponse
 from utils.crypto import CryptoManager
 from supabase import create_client, Client
 from dotenv import load_dotenv
@@ -154,20 +156,39 @@ async def send_verification_email(data: Data, background_tasks: BackgroundTasks)
 
 @router.post("/login")
 async def login(data: Data):
+    sql_helper = SQLHelper()
     crypto_manager = CryptoManager()
-    email = data.email
-    password = crypto_manager.hash_data(data.password.encode())
-    supabase: Client = create_client(Envs.SB_url, Envs.SB_key)
-    user = supabase.table("accounts").select("*").eq("email", email).execute().data
-    if not user:
-        return {"message": "Invalid email or password."}
-    user = user[0]
-    if user['password'] != password:
-        return {"message": "Invalid email or password."}
-    if not user['verified']:
-        return {"message": "Account not verified. Please check your email."}
+    user_email = data.email
+    hashed_password = crypto_manager.hash_data(data.password.encode())
     
-    return {"message": "Login successful!"}
+    engine  = create_engine(Envs.database_url)
+    query = sql_helper.load_query("sql_queries/login.sql")
+    with engine.connect() as connection:
+        result = connection.execute(query, {
+            'email': user_email,
+        })
+        user = result.mappings().fetchone()
+
+    if user is None:
+        print("failed")
+        return JSONResponse(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            content={"message": "Username or password incorrect"}
+        )
+    if user['password'] != hashed_password:
+        print("wrong password")
+        return JSONResponse(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            content={"message": "Username or password incorrect"}
+        )
+    if not user['verified']:
+        print("Not Verified")
+        return JSONResponse(
+            status_code=status.HTTP_403_FORBIDDEN,
+            content={"message": "Account not verified please check your email"}
+        )
+    else:
+        return {"message": "Login successful!"}
 
 @router.post("/debug")
 async def debug(data: Data):
