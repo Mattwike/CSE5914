@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-import account
+from accounts import api_router
 
 app = FastAPI(title="CSE5914 Capstone Backend")
 
@@ -11,7 +11,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(account.router)
+app.include_router(api_router)
 
 @app.get("/")
 async def root():
