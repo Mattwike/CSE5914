@@ -116,7 +116,7 @@ async def verify_token(token: str, user_email: str):
     query = sql_helper.load_query("sql_queries/get_user_token.sql")
     with engine.connect() as connection:
         result = connection.execute(query, {
-            'email': user_email
+            'email': user_email.lower()
         })
         row = result.mappings().fetchone()
     valid_token = row['token']
@@ -125,7 +125,7 @@ async def verify_token(token: str, user_email: str):
         query = sql_helper.load_query("sql_queries/validate_user.sql")
         with engine.connect() as connection:
             result = connection.execute(query, {
-                'email': user_email
+                'email': user_email.lower()
             })
             connection.commit()
         return {"message": "Account verified successfully!"}
