@@ -18,7 +18,3 @@ app.include_router(api_router)
 app.include_router(recommendations.router)
 app.include_router(events.router)
 app.include_router(groups.router)
-
-@app.get("/")
-async def root():
-    return {"message": "Hello test Applications!"}
