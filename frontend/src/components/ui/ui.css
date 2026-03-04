@@ -1,0 +1,63 @@
+/* UI primitives styles referencing design tokens */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: calc(var(--space-2)) calc(var(--space-3));
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  background: var(--color-surface);
+  color: var(--color-text);
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.08s ease;
+}
+.btn:active { transform: translateY(1px); }
+.btn[disabled] { opacity: 0.6; cursor: not-allowed; }
+
+.btn--primary {
+  background: var(--color-primary);
+  color: white;
+  border-color: var(--color-primary-600);
+}
+.btn--ghost {
+  background: transparent;
+  border-color: var(--color-muted);
+}
+
+.card {
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  box-shadow: var(--shadow-sm);
+}
+
+.input {
+  display: block;
+  width: 100%;
+  padding: calc(var(--space-2) + 2px) calc(var(--space-3));
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(15,23,42,0.08);
+  background: white;
+  color: var(--color-text);
+}
+.input::placeholder { color: var(--color-muted); }
+
+.page-wrapper {
+  padding: var(--space-4) 0;
+}
+
+/* Login page specific styles */
+.login-page {
+  background: var(--palette-gray-500);
+  min-height: 100vh;
+  width: 100%; /* ensure full viewport width */
+  display: flex;
+  align-items: center;
+  justify-content: center; /* center the inner container horizontally */
+  padding: var(--space-4) 0; /* keep some vertical breathing room */
+}
+
+.login-card {
+  background: var(--palette-blush-100);
+}

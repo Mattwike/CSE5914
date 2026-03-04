@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import Input from "../components/ui/Input";
+import Button from "../components/ui/Button";
 
 // Grab your API URL from environment variables
 const API_BASE_URL = import.meta.env.VITE_WEBSITE_URL || "http://localhost:8000";
@@ -26,7 +28,7 @@ function Login() {
 
       if (response.ok) {
         alert("Login Successful!");
-        navigate("/dashboard"); 
+        navigate("/dashboard");
       } else {
         alert(data.message || "Invalid credentials");
       }
@@ -40,66 +42,28 @@ function Login() {
   };
 
   return (
-    <div style={styles.container}>
-      <h1>Login</h1>
+    <div className="page-wrapper login-page">
+      <div className="container">
+        <div className="card login-card" style={{ maxWidth: 420, margin: "48px auto", display: "flex", gap: 16, flexDirection: "column" }}>
+          <h1>Login</h1>
 
-      <input
-        style={styles.input}
-        type="email"
-        placeholder="Email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-      />
+          <form onSubmit={(e) => { e.preventDefault(); handleLogin(); }} style={{ display: "flex", gap: 12, flexDirection: "column" }}>
+            <Input label="Email" type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} />
+            <Input label="Password" type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
 
-      <input
-        style={styles.input}
-        type="password"
-        placeholder="Password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-      />
+            <Button type="submit" disabled={loading}>
+              {loading ? "Logging in..." : "Log In"}
+            </Button>
+          </form>
 
-      <button 
-        style={styles.button} 
-        onClick={handleLogin}
-        disabled={loading}
-      >
-        {loading ? "Logging in..." : "Log In"}
-      </button>
-
-      <div style={styles.footer}>
-        <p>Don't have an account?</p>
-        <button style={styles.button} onClick={() => navigate("/create-account")}>
-          Create Account
-        </button>
+          <div style={{ textAlign: "center", marginTop: 8 }}>
+            <p style={{ margin: '8px 0' }}>Don't have an account?</p>
+            <Button variant="ghost" onClick={() => navigate("/create-account")}>Create Account</Button>
+          </div>
+        </div>
       </div>
     </div>
   );
 }
-
-const styles = {
-  container: {
-    display: "flex",
-    flexDirection: "column" as const,
-    justifyContent: "center",
-    alignItems: "center",
-    gap: "20px",
-    marginTop: "50px"
-  },
-  input: {
-    width: "250px",
-    padding: "5px",
-    fontSize: "20px",
-  },
-  button: {
-    width: "250px",
-    fontSize: "20px",
-    cursor: "pointer",
-  },
-  footer: {
-    textAlign: "center" as const,
-    marginTop: "10px"
-  }
-};
 
 export default Login;
