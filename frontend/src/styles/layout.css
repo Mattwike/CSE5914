@@ -1,0 +1,37 @@
+/* Lightweight layout utilities for PageWrapper, Header, Sidebar, MainContent */
+@import './variables.css';
+
+.page-wrapper {
+  padding: var(--space-4) 0;
+}
+
+.site-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.app-layout {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: var(--space-4);
+  align-items: start;
+}
+
+.app-sidebar {
+  background: var(--color-primary-600);
+  color: var(--palette-white);
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+}
+
+.sidebar-nav { list-style: none; padding: 0; margin: 0; }
+.sidebar-nav li { padding: calc(var(--space-2)); border-bottom: 1px solid rgba(255,255,255,0.06); }
+
+.main-content {
+  min-height: 60vh;
+}
+
+.page-grid { display: grid; grid-template-columns: 240px 1fr; gap: var(--space-4); }

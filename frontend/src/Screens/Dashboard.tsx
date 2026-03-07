@@ -1,6 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { Button, Card, Heading, Text, Container } from "../components/ui";
+import { Button, Card, Heading, Text } from "../components/ui";
+import { PageWrapper, Sidebar, MainContent } from "../components/layout";
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -12,50 +13,50 @@ const Dashboard: React.FC = () => {
   };
 
   return (
-    <div style={styles.dashboardContainer}>
-      {/* Sidebar */}
-      <nav style={styles.sidebar}>
-        <h2 style={styles.logo}>App Name</h2>
-        <ul style={styles.navList}>
-          <li style={styles.navItem}>Home</li>
-          <li style={styles.navItem}>Profile</li>
-          <li style={styles.navItem}>Settings</li>
-        </ul>
-        <Button style={styles.logoutBtn} onClick={handleLogout}>Logout</Button>
-      </nav>
+    <PageWrapper style={styles.dashboardContainer}>
+      <div className="app-layout">
+        <Sidebar>
+          <Heading level={2} className="mb-3">App Name</Heading>
+          <ul className="sidebar-nav" style={styles.navList as any}>
+            <li style={styles.navItem as any}>Home</li>
+            <li style={styles.navItem as any}>Profile</li>
+            <li style={styles.navItem as any}>Settings</li>
+          </ul>
+          <Button style={styles.logoutBtn} onClick={handleLogout}>Logout</Button>
+        </Sidebar>
 
-      {/* Main Content Area */}
-      <main style={styles.mainContent}>
-        <header style={styles.header}>
-          <Heading level={1}>Welcome Back!</Heading>
-          <Text>Here is what's happening with your account today.</Text>
-        </header>
+        <MainContent>
+          <header style={styles.header}>
+            <Heading level={1}>Welcome Back!</Heading>
+            <Text>Here is what's happening with your account today.</Text>
+          </header>
 
-        <section style={styles.statsGrid}>
-          <Card className="" style={styles.card}>
-            <Heading level={3}>Total Activity</Heading>
-            <Text as="p" className="" style={styles.statNumber}>1,240</Text>
-          </Card>
-          <Card className="" style={styles.card}>
-            <Heading level={3}>Notifications</Heading>
-            <Text as="p" className="" style={styles.statNumber}>3 New</Text>
-          </Card>
-          <Card className="" style={styles.card}>
-            <Heading level={3}>Status</Heading>
-            <Text as="p" className="" style={styles.statusActive}>Verified</Text>
-          </Card>
-        </section>
+          <section style={styles.statsGrid}>
+            <Card style={styles.card}>
+              <Heading level={3}>Total Activity</Heading>
+              <Text as="p" style={styles.statNumber}>1,240</Text>
+            </Card>
+            <Card style={styles.card}>
+              <Heading level={3}>Notifications</Heading>
+              <Text as="p" style={styles.statNumber}>3 New</Text>
+            </Card>
+            <Card style={styles.card}>
+              <Heading level={3}>Status</Heading>
+              <Text as="p" style={styles.statusActive}>Verified</Text>
+            </Card>
+          </section>
 
-        <section>
-          <Card style={styles.recentActivity}>
-            <Heading level={3}>Recent Updates</Heading>
-            <div style={styles.tablePlaceholder}>
-              <Text>You verified your email yesterday at 4:30 PM.</Text>
-            </div>
-          </Card>
-        </section>
-      </main>
-    </div>
+          <section>
+            <Card style={styles.recentActivity}>
+              <Heading level={3}>Recent Updates</Heading>
+              <div style={styles.tablePlaceholder}>
+                <Text>You verified your email yesterday at 4:30 PM.</Text>
+              </div>
+            </Card>
+          </section>
+        </MainContent>
+      </div>
+    </PageWrapper>
   );
 };
 
