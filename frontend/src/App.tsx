@@ -3,7 +3,7 @@ import Home from "./Screens/Home";
 import Login from "./Screens/Login";
 import CreateAccount from "./Screens/CreateAccount";
 import Verify from './Screens/Verify';
-import Dashboard from "./Screens/dashboard";
+import Dashboard from "./Screens/Dashboard";
 
 function App() {
   return (

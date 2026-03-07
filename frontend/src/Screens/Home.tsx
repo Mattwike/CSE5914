@@ -1,31 +1,16 @@
 import { useNavigate } from "react-router-dom";
+import Button from "../components/ui/Button";
 
 function Home() {
   const navigate = useNavigate();
 
   return (
-    <div style={styles.container}>
+    <div className="stack-vertical flex-center h-100">
       <h1>Welcome</h1>
       <p>Please log in to continue</p>
 
-      <button style={styles.button} onClick={() => navigate("/login")}>
-        Login
-      </button>
+      <Button onClick={() => navigate("/login")}>Login</Button>
     </div>
   );
 }
-
-const styles = {
-  container: {
-    height: "100px",
-    display: "flex",
-    flexDirection: "column" as const,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  button: {
-    cursor: "pointer",
-  },
-};
-
 export default Home;

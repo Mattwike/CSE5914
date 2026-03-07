@@ -7,9 +7,9 @@ type InputProps = React.InputHTMLAttributes<HTMLInputElement> & {
 
 const Input: React.FC<InputProps> = ({ label, className = '', ...rest }) => {
   return (
-    <div style={{ width: '100%' }}>
-      {label ? <label style={{ display: 'block', marginBottom: '6px' }}>{label}</label> : null}
-      <input className={`input ${className}`.trim()} {...rest} />
+    <div className={`w-full ${className}`.trim()}>
+      {label ? <label className="mb-1" >{label}</label> : null}
+      <input className={`input`.trim()} {...rest} />
     </div>
   )
 }
