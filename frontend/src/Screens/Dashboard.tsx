@@ -1,5 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import { Button, Card, Heading, Text, Container } from "../components/ui";
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -20,38 +21,38 @@ const Dashboard: React.FC = () => {
           <li style={styles.navItem}>Profile</li>
           <li style={styles.navItem}>Settings</li>
         </ul>
-        <button style={styles.logoutBtn} onClick={handleLogout}>
-          Logout
-        </button>
+        <Button style={styles.logoutBtn} onClick={handleLogout}>Logout</Button>
       </nav>
 
       {/* Main Content Area */}
       <main style={styles.mainContent}>
         <header style={styles.header}>
-          <h1>Welcome Back!</h1>
-          <p>Here is what's happening with your account today.</p>
+          <Heading level={1}>Welcome Back!</Heading>
+          <Text>Here is what's happening with your account today.</Text>
         </header>
 
         <section style={styles.statsGrid}>
-          <div style={styles.card}>
-            <h3>Total Activity</h3>
-            <p style={styles.statNumber}>1,240</p>
-          </div>
-          <div style={styles.card}>
-            <h3>Notifications</h3>
-            <p style={styles.statNumber}>3 New</p>
-          </div>
-          <div style={styles.card}>
-            <h3>Status</h3>
-            <p style={styles.statusActive}>Verified</p>
-          </div>
+          <Card className="" style={styles.card}>
+            <Heading level={3}>Total Activity</Heading>
+            <Text as="p" className="" style={styles.statNumber}>1,240</Text>
+          </Card>
+          <Card className="" style={styles.card}>
+            <Heading level={3}>Notifications</Heading>
+            <Text as="p" className="" style={styles.statNumber}>3 New</Text>
+          </Card>
+          <Card className="" style={styles.card}>
+            <Heading level={3}>Status</Heading>
+            <Text as="p" className="" style={styles.statusActive}>Verified</Text>
+          </Card>
         </section>
 
-        <section style={styles.recentActivity}>
-          <h3>Recent Updates</h3>
-          <div style={styles.tablePlaceholder}>
-            <p>You verified your email yesterday at 4:30 PM.</p>
-          </div>
+        <section>
+          <Card style={styles.recentActivity}>
+            <Heading level={3}>Recent Updates</Heading>
+            <div style={styles.tablePlaceholder}>
+              <Text>You verified your email yesterday at 4:30 PM.</Text>
+            </div>
+          </Card>
         </section>
       </main>
     </div>

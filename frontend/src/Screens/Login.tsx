@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Input from "../components/ui/Input";
-import Button from "../components/ui/Button";
+import { Input, Button, Heading, Text, Container, Card } from "../components/ui";
 
 // Grab your API URL from environment variables
 const API_BASE_URL = import.meta.env.VITE_WEBSITE_URL || "http://localhost:8000";
@@ -43,9 +42,9 @@ function Login() {
 
   return (
     <div className="page-wrapper login-page">
-      <div className="container">
-        <div className="card login-card" style={{ maxWidth: 420, margin: "48px auto", display: "flex", gap: 16, flexDirection: "column" }}>
-          <h1>Login</h1>
+      <Container>
+        <Card className="login-card" style={{ maxWidth: 420, margin: "48px auto", display: "flex", gap: 16, flexDirection: "column" }}>
+          <Heading level={1}>Login</Heading>
 
           <form onSubmit={(e) => { e.preventDefault(); handleLogin(); }} style={{ display: "flex", gap: 12, flexDirection: "column" }}>
             <Input label="Email" type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} />
@@ -57,11 +56,11 @@ function Login() {
           </form>
 
           <div style={{ textAlign: "center", marginTop: 8 }}>
-            <p style={{ margin: '8px 0' }}>Don't have an account?</p>
+            <Text as="p" className="mb-1">Don't have an account?</Text>
             <Button variant="ghost" onClick={() => navigate("/create-account")}>Create Account</Button>
           </div>
-        </div>
-      </div>
+        </Card>
+      </Container>
     </div>
   );
 }

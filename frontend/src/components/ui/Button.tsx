@@ -1,19 +1,16 @@
 import React from 'react'
 import './ui.css'
 
-type ButtonProps = {
+type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
   children: React.ReactNode
   variant?: 'primary' | 'ghost'
-  onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void
   className?: string
-  disabled?: boolean
-  type?: 'button' | 'submit' | 'reset'
 }
 
-const Button: React.FC<ButtonProps> = ({ children, variant = 'primary', onClick, className = '', disabled = false, type = 'button' }) => {
+const Button: React.FC<ButtonProps> = ({ children, variant = 'primary', className = '', ...rest }) => {
   const cls = `btn ${variant === 'primary' ? 'btn--primary' : 'btn--ghost'} ${className}`.trim()
   return (
-    <button className={cls} onClick={onClick} disabled={disabled} type={type}>
+    <button className={cls} {...rest}>
       {children}
     </button>
   )

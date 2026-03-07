@@ -1,16 +1,19 @@
 import { useNavigate } from "react-router-dom";
-import Button from "../components/ui/Button";
+import { Button, Heading, Text, Container } from "../components/ui";
 
 function Home() {
   const navigate = useNavigate();
 
   return (
-    <div className="stack-vertical flex-center h-100">
-      <h1>Welcome</h1>
-      <p>Please log in to continue</p>
+    <Container>
+      <div className="stack-vertical flex-center h-100">
+        <Heading level={1}>Welcome</Heading>
+        <Text>Please log in to continue</Text>
 
-      <Button onClick={() => navigate("/login")}>Login</Button>
-    </div>
+        <Button onClick={() => navigate("/login")}>Login</Button>
+      </div>
+    </Container>
   );
 }
+
 export default Home;
