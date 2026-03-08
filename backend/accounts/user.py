@@ -40,7 +40,7 @@ conf = ConnectionConfig(
 
 router = APIRouter(prefix="/user", tags=["user"])
 
-@router.post("/create_account")
+@router.post("/create")
 async def create_account(data: Data, background_tasks: BackgroundTasks):
     crypto_manager = CryptoManager()
     password = crypto_manager.hash_data(data.password.encode())
@@ -89,7 +89,7 @@ async def create_account(data: Data, background_tasks: BackgroundTasks):
     background_tasks.add_task(fm.send_message, message)
     return {"message": "Account created. Please check your email to verify your account."}
 
-@router.get("/verify_token")
+@router.get("/auth/verify")
 async def verify_token(token: str, user_email: str):
     supabase: Client = create_client(Envs.SB_url, Envs.SB_key)
     crypto_manager = CryptoManager()
@@ -106,7 +106,7 @@ async def verify_token(token: str, user_email: str):
          return {"message": "Invalid or expired token."}
     
 
-@router.post("/resend_verification_email")
+@router.post("/auth/resend")
 async def send_verification_email(data: Data, background_tasks: BackgroundTasks):
     crypto_manager = CryptoManager()
     email = data.email
@@ -144,29 +144,10 @@ async def login(data: Data):
     
     return {"message": "Login successful!"}
 
-@router.post("/debug")
-async def debug(data: Data):
-    supabase: Client = create_client(Envs.SB_url, Envs.SB_key)
-    crypto_manager = CryptoManager()
-    uid = crypto_manager.hash_data(data.email.encode())
-    supabase.table("account_tokens").delete().eq("id", uid).execute()
-    supabase.table("accounts").delete().eq("id", uid).execute()
-    return {"message": "Debug complete. User data deleted."}
-    
-
-@router.delete("/delete_account")
-async def deleteAccount(data: Data, background_tasks: BackgroundTasks):
+@router.delete("/{user_id}")
+async def delete_Account(user_id: str, background_tasks: BackgroundTasks):
     pass
 
-
-@router.post("/create_event")
-async def createEvent(eventID: str, eventName: str):
-    pass
-
-@router.delete("/delete_event")
-async def deleteEvent(eventID: str, userID: str):
-    pass
-
-@router.post("modify_account")
-async def modifyAccount(columnID: str, value: str):
+@router.post("/{user_id}")
+async def modify_Account(user_id: str, columnID: str, value: str):
     pass
