@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react'
 import { PageWrapper } from '../components/layout'
 import { EventGrid } from '../components/events'
-import { Input, Button } from '../components/ui'
+import { Input, Button, Heading } from '../components/ui'
 import '../styles/events.css'
 
 type EventItem = {
@@ -50,7 +50,7 @@ const EventsPage: React.FC = () => {
   return (
     <PageWrapper>
       <div className="stack-vertical">
-        <h1>Events</h1>
+        <Heading level={1}>Events</Heading>
 
         <div className="grid" style={{ gridTemplateColumns: '1fr 220px', gap: '12px' } as any}>
           <div>

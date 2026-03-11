@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import type { ChangeEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import useAuth from "../hooks/useAuth"
+import { PageWrapper, MainContent } from "../components/layout"
+import { Card, Heading, Input, Button, Text } from "../components/ui"
 
 const CreateAccount: React.FC = () => {
   const navigate = useNavigate();
@@ -23,10 +25,8 @@ const CreateAccount: React.FC = () => {
 
     try {
       const res = await register(email, password)
-      // backend returns a message about verification email
       if (res && (res as any).message) alert((res as any).message)
       else alert('Account created — please check your email to verify your account.')
-      // navigate to login so user can sign in after verification
       navigate('/login')
     } catch (err: any) {
       console.error('Signup Error:', err)
@@ -35,66 +35,22 @@ const CreateAccount: React.FC = () => {
   }
 
   return (
-    <div style={styles.container}>
-      <h1>Create Account</h1>
+    <PageWrapper>
+      <MainContent>
+        <Card className="login-card centered-card">
+          <Heading level={1}>Create Account</Heading>
 
-      <input
-        style={styles.input}
-        type="email"
-        placeholder="Email"
-        value={email}
-        onChange={handleEmailChange}
-      />
+          <Input label="Email" type="email" placeholder="you@example.com" value={email} onChange={handleEmailChange} />
+          <Input label="Password" type="password" placeholder="Password" value={password} onChange={handlePasswordChange} />
+          <Input label="Confirm Password" type="password" placeholder="Confirm Password" value={confirmPassword} onChange={handleConfirmChange} />
 
-      <input
-        style={styles.input}
-        type="password"
-        placeholder="Password"
-        value={password}
-        onChange={handlePasswordChange}
-      />
+          <Button onClick={handleSignUp} disabled={loading}>{loading ? 'Processing...' : 'Sign Up'}</Button>
 
-      <input
-        style={styles.input}
-        type="password"
-        placeholder="Confirm Password"
-        value={confirmPassword}
-        onChange={handleConfirmChange}
-      />
-
-      <button
-        style={styles.button}
-        onClick={handleSignUp}
-        disabled={loading}
-      >
-        {loading ? "Processing..." : "Sign Up"}
-      </button>
-
-      {error ? <div style={{ color: '#b00020', marginTop: 8 }}>{error}</div> : null}
-    </div>
+          {error ? <Text as="p" className="error-text">{error}</Text> : null}
+        </Card>
+      </MainContent>
+    </PageWrapper>
   );
-};
-
-const styles = {
-  container: {
-    minHeight: "200px",
-    display: "flex",
-    flexDirection: "column" as const,
-    justifyContent: "center",
-    alignItems: "center",
-    gap: "20px",
-    paddingTop: 24,
-  },
-  input: {
-    width: "250px",
-    padding: "8px",
-    fontSize: "16px",
-  },
-  button: {
-    width: "250px",
-    fontSize: "16px",
-    cursor: "pointer",
-  },
 };
 
 export default CreateAccount;

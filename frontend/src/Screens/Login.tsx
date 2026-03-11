@@ -26,10 +26,10 @@ function Login() {
   return (
     <PageWrapper className="login-page">
       <MainContent>
-        <Card className="login-card" style={{ maxWidth: 420, margin: "48px auto", display: "flex", gap: 16, flexDirection: "column" }}>
+        <Card className="login-card centered-card">
           <Heading level={1}>Login</Heading>
 
-          <form onSubmit={(e) => { e.preventDefault(); handleLogin(); }} style={{ display: "flex", gap: 12, flexDirection: "column" }}>
+          <form onSubmit={(e) => { e.preventDefault(); handleLogin(); }} className="form-stack">
             <Input label="Email" type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} />
             <Input label="Password" type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
 
@@ -38,12 +38,12 @@ function Login() {
             </Button>
           </form>
 
-          <div style={{ textAlign: "center", marginTop: 8 }}>
+          <div className="text-center mt-2">
             <Text as="p" className="mb-1">Don't have an account?</Text>
             <Button variant="ghost" onClick={() => navigate("/create-account")}>Create Account</Button>
           </div>
 
-          {error ? <div style={{ color: '#b00020', marginTop: 8 }}>{error}</div> : null}
+          {error ? <Text as="p" className="error-text">{error}</Text> : null}
         </Card>
       </MainContent>
     </PageWrapper>
