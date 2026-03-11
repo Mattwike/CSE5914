@@ -40,7 +40,7 @@ const Verify: React.FC = () => {
   return (
     <PageWrapper>
       <MainContent>
-        <div style={{ textAlign: 'center', marginTop: 40 }}>
+        <div className="text-center mt-2">
           <Heading level={1}>Verification Status</Heading>
           <Text as="p">{status}</Text>
         </div>

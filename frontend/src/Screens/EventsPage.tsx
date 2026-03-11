@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react'
-import { PageWrapper } from '../components/layout'
+import { PageWrapper, Sidebar, MainContent } from '../components/layout'
 import { EventGrid } from '../components/events'
 import { Input, Button, Heading } from '../components/ui'
 import '../styles/events.css'
@@ -49,28 +49,33 @@ const EventsPage: React.FC = () => {
 
   return (
     <PageWrapper>
-      <div className="stack-vertical">
-        <Heading level={1}>Events</Heading>
+      <div className="app-layout">
+        <Sidebar />
+        <MainContent>
+          <div className="stack-vertical">
+            <Heading level={1}>Events</Heading>
 
-        <div className="grid" style={{ gridTemplateColumns: '1fr 220px', gap: '12px' } as any}>
-          <div>
-            <Input placeholder="Search events" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1) }} />
+            <div className="grid filters-grid">
+              <div>
+                <Input placeholder="Search events" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1) }} />
+              </div>
+              <div>
+                <select className="input" value={location} onChange={(e) => { setLocation(e.target.value); setPage(1) }}>
+                  <option value="">All locations</option>
+                  {locations.map((l) => <option key={l} value={l}>{l}</option>)}
+                </select>
+              </div>
+            </div>
+
+            <EventGrid events={paginated} />
+
+            <div className="flex-center pagination">
+              <Button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}>Previous</Button>
+              <div>Page {page} of {totalPages}</div>
+              <Button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages}>Next</Button>
+            </div>
           </div>
-          <div>
-            <select className="input" value={location} onChange={(e) => { setLocation(e.target.value); setPage(1) }}>
-              <option value="">All locations</option>
-              {locations.map((l) => <option key={l} value={l}>{l}</option>)}
-            </select>
-          </div>
-        </div>
-
-        <EventGrid events={paginated} />
-
-        <div className="flex-center" style={{ gap: '12px' } as any}>
-          <Button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}>Previous</Button>
-          <div>Page {page} of {totalPages}</div>
-          <Button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages}>Next</Button>
-        </div>
+        </MainContent>
       </div>
     </PageWrapper>
   )

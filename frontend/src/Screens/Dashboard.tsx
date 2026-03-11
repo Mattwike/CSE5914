@@ -1,5 +1,5 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, NavLink } from "react-router-dom";
 import { Button, Card, Heading, Text } from "../components/ui";
 import { PageWrapper, Sidebar, MainContent } from "../components/layout";
 
@@ -17,9 +17,10 @@ const Dashboard: React.FC = () => {
         <Sidebar>
           <Heading level={2} className="mb-3">App Name</Heading>
           <ul className="sidebar-nav">
-            <li>Home</li>
-            <li>Profile</li>
-            <li>Settings</li>
+            <li><NavLink to="/dashboard" className={({isActive}) => isActive ? 'active' : ''}>Home</NavLink></li>
+            <li><NavLink to="/events" className={({isActive}) => isActive ? 'active' : ''}>Events</NavLink></li>
+            <li><NavLink to="/profile" className={({isActive}) => isActive ? 'active' : ''}>Profile</NavLink></li>
+            <li><NavLink to="/settings" className={({isActive}) => isActive ? 'active' : ''}>Settings</NavLink></li>
           </ul>
           <Button variant="ghost" onClick={handleLogout}>Logout</Button>
         </Sidebar>
@@ -41,7 +42,7 @@ const Dashboard: React.FC = () => {
             </Card>
             <Card className="card card--elevated">
               <Heading level={3}>Status</Heading>
-              <Text as="p" style={{ color: 'var(--color-success)', fontWeight: 600 }}>Verified</Text>
+              <Text as="p" className="status-active">Verified</Text>
             </Card>
           </section>
 

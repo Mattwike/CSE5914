@@ -76,3 +76,4 @@ input:-webkit-autofill:hover {
 .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--space-4); margin-bottom: var(--space-4); }
 .table-placeholder { padding: var(--space-sm); background: var(--color-muted); border-radius: var(--radius-sm); margin-top: var(--space-sm); }
 .error-text { color: var(--color-danger); margin-top: var(--space-sm); }
+.status-active { color: var(--color-success); font-weight: 600; }
