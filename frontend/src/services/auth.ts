@@ -7,13 +7,14 @@ export async function login(email: string, password: string) {
 }
 
 export async function register(email: string, password: string) {
-  return request('/user/create', { method: 'POST', body: { email, password } })
+  // Backend endpoint is `/user/create_account`
+  return request('/user/create_account', { method: 'POST', body: { email, password } })
 }
 
 export async function resendVerification(email: string) {
-  return request('/user/auth/resend', { method: 'POST', body: { email } })
+  return request('/user/resend_verification_email', { method: 'POST', body: { email } })
 }
 
 export async function verifyToken(token: string, user_email: string) {
-  return request(`/user/auth/verify?token=${encodeURIComponent(token)}&user_email=${encodeURIComponent(user_email)}`)
+  return request(`/user/verify_token?token=${encodeURIComponent(token)}&user_email=${encodeURIComponent(user_email)}`)
 }
