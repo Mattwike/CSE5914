@@ -7,13 +7,14 @@ type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
   className?: string
 }
 
-const Button: React.FC<ButtonProps> = ({ children, variant = 'primary', className = '', ...rest }) => {
-  const cls = `btn ${variant === 'primary' ? 'btn--primary' : 'btn--ghost'} ${className}`.trim()
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(({ children, variant = 'primary', className = '', ...rest }, ref) => {
+  const cls = ['btn', variant === 'primary' ? 'btn--primary' : 'btn--ghost']
+  if (className) cls.push(className)
   return (
-    <button className={cls} {...rest}>
+    <button ref={ref} className={cls.join(' ')} {...rest}>
       {children}
     </button>
   )
-}
+})
 
 export default Button

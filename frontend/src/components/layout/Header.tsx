@@ -1,18 +1,21 @@
 import React from 'react'
 import '../../styles/layout.css'
-import { Heading, Button } from '../ui'
+import { Heading, Button, Container } from '../ui'
 
 type HeaderProps = {
   title?: string
   onLogout?: () => void
+  className?: string
 }
 
-const Header: React.FC<HeaderProps> = ({ title = 'App Name', onLogout }) => {
+const Header: React.FC<HeaderProps> = ({ title = 'App Name', onLogout, className = '' }) => {
   return (
-    <header className="site-header">
-      <Heading level={2}>{title}</Heading>
-      {onLogout ? <Button variant="ghost" onClick={onLogout}>Logout</Button> : null}
-    </header>
+    <Container>
+      <header className={`site-header ${className}`.trim()}>
+        <Heading level={2}>{title}</Heading>
+        {onLogout ? <Button variant="ghost" onClick={onLogout}>Logout</Button> : null}
+      </header>
+    </Container>
   )
 }
 

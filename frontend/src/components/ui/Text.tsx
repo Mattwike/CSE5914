@@ -7,9 +7,13 @@ type TextProps = React.HTMLAttributes<HTMLElement> & {
   className?: string
 }
 
-const Text: React.FC<TextProps> = ({ children, as = 'p', className = '', ...rest }) => {
+const Text = React.forwardRef<HTMLElement, TextProps>(({ children, as = 'p', className = '', ...rest }, ref) => {
   const Tag = as as any
-  return <Tag className={`type-body ${className}`.trim()} {...rest}>{children}</Tag>
-}
+  return (
+    <Tag ref={ref as any} className={`type-body ${className}`.trim()} {...rest}>
+      {children}
+    </Tag>
+  )
+})
 
 export default Text
