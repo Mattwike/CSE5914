@@ -3,8 +3,8 @@ import { PageWrapper, Sidebar, MainContent } from '../components/layout'
 import { Button, Card, Heading, Input, Text } from '../components/ui'
 
 const Profile: React.FC = () => {
-  const [firstName, setFirstName] = useState('Alex')
-  const [lastName, setLastName] = useState('Johnson')
+  const [firstName, setFirstName] = useState('Brutus')
+  const [lastName, setLastName] = useState('Buckeye')
   const [gender, setGender] = useState('Prefer not to say')
   const [savedMessage, setSavedMessage] = useState('')
   const [preferenceMessage, setPreferenceMessage] = useState('')
