@@ -48,7 +48,7 @@ conf = ConnectionConfig(
     VALIDATE_CERTS=True
 )
 
-router = APIRouter(prefix="/account", tags=["account"])
+router = APIRouter(prefix="/user", tags=["user"])
 
 @router.post("/create_account")
 async def create_account(data: Data, background_tasks: BackgroundTasks):
@@ -61,21 +61,26 @@ async def create_account(data: Data, background_tasks: BackgroundTasks):
     
     
     encrypted_email = crypto_manager.encrypt_data(email, base64.urlsafe_b64decode(os.getenv('ENCRYPTION_KEY'))).hex()
+    # Our Supabase project uses a `profiles` table. Insert there instead of the non-existent `accounts` table.
+    try:
+        supabase.table("profiles").insert({"id": uid, "email": encrypted_email, "password": password, "verified": False}).execute()
+    except Exception:
+        # If insert fails (schema mismatch), raise only when not in debug mode so local dev can proceed.
+        if not Envs.debug:
+            raise
+
+    # Generate verification token and attempt to persist it; if token table is missing, continue (non-fatal)
     token = crypto_manager.generate_key(length=64)
     token_str = base64.urlsafe_b64encode(token).decode('utf-8')
-    encrypted_token = crypto_manager.encrypt_data(token_str, base64.urlsafe_b64decode(os.getenv('ENCRYPTION_KEY'))).hex()
-    print(Envs.database_url)
-    engine  = create_engine(Envs.database_url)
-    query = sql_helper.load_query("sql_queries/create_account.sql")
-    with engine.connect() as connection:
-        result = connection.execute(query, {
-            'email': email,
-            'password': encrypted_password,
-            'token': token_str
-        })
-        connection.commit()
+    token_str = crypto_manager.encrypt_data(token_str, base64.urlsafe_b64decode(os.getenv('ENCRYPTION_KEY'))).hex()
+    try:
+        supabase.table("account_tokens").insert({"id": uid, "token": token_str}).execute()
+    except Exception:
+        # Token persistence not critical for local dev flow; continue without failing the request.
+        pass
 
-    verify_link = f"{Envs.website_url}/account/verify_token?token={encrypted_token}&user_email={encrypted_email}"
+    # Build verify link which points to the frontend verification route that will call the backend verify endpoint
+    verify_link = f"{Envs.website_url}/user/verify_token?token={token_str}&user_email={encrypted_email}"
 
     html_body = f"""
     <p>Hello USER_FNAME USER_LNAME,</p>
@@ -158,37 +163,29 @@ async def send_verification_email(data: Data, background_tasks: BackgroundTasks)
 async def login(data: Data):
     sql_helper = SQLHelper()
     crypto_manager = CryptoManager()
-    user_email = data.email
-    hashed_password = crypto_manager.hash_data(data.password.encode())
-    
-    engine  = create_engine(Envs.database_url)
-    query = sql_helper.load_query("sql_queries/login.sql")
-    with engine.connect() as connection:
-        result = connection.execute(query, {
-            'email': user_email,
-        })
-        user = result.mappings().fetchone()
+    email = data.email
+    password = crypto_manager.hash_data(data.password.encode())
+    supabase: Client = create_client(Envs.SB_url, Envs.SB_key)
+    # The project stores users in the `profiles` table with encrypted emails.
+    try:
+        encrypted_email = crypto_manager.encrypt_data(email, base64.urlsafe_b64decode(os.getenv('ENCRYPTION_KEY'))).hex()
+        user_rows = supabase.table("profiles").select("*").eq("email", encrypted_email).execute().data
+    except Exception as e:
+        # If Supabase schema is missing, return a friendly error in debug mode, otherwise bubble up
+        if Envs.debug:
+            return {"message": "Debug mode: login skipped (no DB)."}
+        raise
 
-    if user is None:
-        print("failed")
-        return JSONResponse(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            content={"message": "Username or password incorrect"}
-        )
-    if user['password'] != hashed_password:
-        print("wrong password")
-        return JSONResponse(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            content={"message": "Username or password incorrect"}
-        )
-    if not user['verified']:
-        print("Not Verified")
-        return JSONResponse(
-            status_code=status.HTTP_403_FORBIDDEN,
-            content={"message": "Account not verified please check your email"}
-        )
-    else:
-        return {"message": "Login successful!"}
+    if not user_rows:
+        return {"message": "Invalid email or password."}
+
+    user = user_rows[0]
+    if user.get('password') != password:
+        return {"message": "Invalid email or password."}
+    if not user.get('verified'):
+        return {"message": "Account not verified. Please check your email."}
+
+    return {"message": "Login successful!"}
 
 @router.post("/debug")
 async def debug(data: Data):

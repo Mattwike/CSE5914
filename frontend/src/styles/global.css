@@ -1,0 +1,39 @@
+/* Minimal reset and global rules for the design system */
+/* Based on a simple modern reset to avoid breaking existing styles */
+*, *::before, *::after { box-sizing: border-box; }
+html, body, #root { height: 100%; }
+/* Ensure the root element fills width so page-level backgrounds can span the viewport
+   This works around existing body flex rules in index.css without changing them. */
+#root { width: 100%; }
+
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: var(--font-sans);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-base);
+  color: var(--color-text);
+  background-color: var(--color-bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+img, picture, video, canvas, svg { display: block; max-width: 100%; }
+input, button, textarea, select { font: inherit; }
+
+/* Basic container utility used across pages */
+.container {
+  width: 100%;
+  max-width: 1100px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: var(--space-3);
+  padding-right: var(--space-3);
+}
+
+.visually-hidden {
+  position: absolute !important;
+  height: 1px; width: 1px; overflow: hidden;
+  clip: rect(1px, 1px, 1px, 1px); white-space: nowrap;
+}

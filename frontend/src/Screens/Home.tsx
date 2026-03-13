@@ -1,31 +1,22 @@
 import { useNavigate } from "react-router-dom";
+import { Button, Heading, Text } from "../components/ui";
+import { PageWrapper, MainContent } from "../components/layout";
 
 function Home() {
   const navigate = useNavigate();
 
   return (
-    <div style={styles.container}>
-      <h1>Welcome</h1>
-      <p>Please log in to continue</p>
+    <PageWrapper>
+      <MainContent>
+        <div className="stack-vertical flex-center h-100">
+          <Heading level={1}>Welcome</Heading>
+          <Text>Please log in to continue</Text>
 
-      <button style={styles.button} onClick={() => navigate("/login")}>
-        Login
-      </button>
-    </div>
-  );
+          <Button onClick={() => navigate("/login")}>Login</Button>
+        </div>
+      </MainContent>
+    </PageWrapper>
+  )
 }
-
-const styles = {
-  container: {
-    height: "100px",
-    display: "flex",
-    flexDirection: "column" as const,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  button: {
-    cursor: "pointer",
-  },
-};
 
 export default Home;

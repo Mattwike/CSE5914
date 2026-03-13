@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
+import { PageWrapper, MainContent } from "../components/layout"
+import { Heading, Text } from "../components/ui"
 
 const API_BASE_URL = import.meta.env.VITE_WEBSITE_URL || "http://localhost:8000";
 
-// Define an interface for your backend response
 interface VerifyResponse {
   message: string;
 }
@@ -24,10 +25,7 @@ const Verify: React.FC = () => {
       try {
         const response = await fetch(`${API_BASE_URL}/verify?token=${token}`);
         const data: VerifyResponse = await response.json();
-        
         setStatus(data.message);
-        
-        // Optional: Redirect to login after 3 seconds on success
         if (response.ok) {
           setTimeout(() => navigate("/login"), 3000);
         }
@@ -40,10 +38,14 @@ const Verify: React.FC = () => {
   }, [token, navigate]);
 
   return (
-    <div style={{ textAlign: "center", marginTop: "50px" }}>
-      <h1>Verification Status</h1>
-      <p>{status}</p>
-    </div>
+    <PageWrapper>
+      <MainContent>
+        <div className="text-center mt-2">
+          <Heading level={1}>Verification Status</Heading>
+          <Text as="p">{status}</Text>
+        </div>
+      </MainContent>
+    </PageWrapper>
   );
 };
 
