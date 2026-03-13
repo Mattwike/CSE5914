@@ -1,9 +1,13 @@
 from fastapi import APIRouter, BackgroundTasks
 from fastapi_mail import FastMail, MessageSchema, ConnectionConfig, MessageType
+from fastapi import HTTPException, status
+from fastapi.responses import JSONResponse
 from utils.crypto import CryptoManager
 from supabase import create_client, Client
 from dotenv import load_dotenv
 from pydantic import BaseModel
+from sqlalchemy import create_engine, text
+from utils.sql_helper import SQLHelper
 import base64
 import os
 
@@ -24,6 +28,12 @@ class Envs:
     SB_key: str = os.getenv("SUPABASE_KEY")
     debug = os.getenv("DEBUG")
     website_url = os.getenv("VITE_WEBSITE_URL")
+    db_username = os.getenv("DB_USER")
+    db_password = os.getenv("PASSWORD")
+    db_host = os.getenv("HOST")
+    db_port = os.getenv("PORT")
+    db_name = os.getenv("DB_NAME")
+    database_url = f"postgresql+psycopg2://{db_username}:{db_password}@{db_host}:{db_port}/{db_name}?sslmode=require"
 
 conf = ConnectionConfig(
     MAIL_USERNAME=Envs.MAIL_USERNAME,
@@ -43,14 +53,13 @@ router = APIRouter(prefix="/user", tags=["user"])
 @router.post("/create_account")
 async def create_account(data: Data, background_tasks: BackgroundTasks):
     crypto_manager = CryptoManager()
-    password = crypto_manager.hash_data(data.password.encode())
+    sql_helper = SQLHelper()
+    encrypted_password = crypto_manager.hash_data(data.password.encode())
     email = data.email
     if not Envs.debug and (email.endswith("@osu.edu") or email.endswith("@buckeyemail.osu.edu")):
         return {"message": "Invalid email domain. Please use an osu.edu email."}
     
-    # Save user information to the database
-    supabase: Client = create_client(Envs.SB_url, Envs.SB_key)
-    uid = crypto_manager.hash_data(email.encode())
+    
     encrypted_email = crypto_manager.encrypt_data(email, base64.urlsafe_b64decode(os.getenv('ENCRYPTION_KEY'))).hex()
     # Our Supabase project uses a `profiles` table. Insert there instead of the non-existent `accounts` table.
     try:
@@ -104,16 +113,26 @@ async def create_account(data: Data, background_tasks: BackgroundTasks):
 
 @router.get("/verify_token")
 async def verify_token(token: str, user_email: str):
-    supabase: Client = create_client(Envs.SB_url, Envs.SB_key)
+    sql_helper = SQLHelper()
     crypto_manager = CryptoManager()
     token = crypto_manager.decrypt_data(bytes.fromhex(token), base64.urlsafe_b64decode(os.getenv('ENCRYPTION_KEY'))).decode()
     user_email = crypto_manager.decrypt_data(bytes.fromhex(user_email), base64.urlsafe_b64decode(os.getenv('ENCRYPTION_KEY'))).decode()
-    uid = crypto_manager.hash_data(user_email.encode())
-    valid_token = supabase.table("account_tokens").select("token").eq("id", uid).execute().data[0]['token']
-    valid_token = crypto_manager.decrypt_data(bytes.fromhex(valid_token), base64.urlsafe_b64decode(os.getenv('ENCRYPTION_KEY'))).decode()
+    engine  = create_engine(Envs.database_url)
+    query = sql_helper.load_query("sql_queries/get_user_token.sql")
+    with engine.connect() as connection:
+        result = connection.execute(query, {
+            'email': user_email.lower()
+        })
+        row = result.mappings().fetchone()
+    valid_token = row['token']
 
     if token == valid_token:
-        supabase.table("accounts").update({"verified" : True}).eq("id", uid).execute()
+        query = sql_helper.load_query("sql_queries/validate_user.sql")
+        with engine.connect() as connection:
+            result = connection.execute(query, {
+                'email': user_email.lower()
+            })
+            connection.commit()
         return {"message": "Account verified successfully!"}
     else:
          return {"message": "Invalid or expired token."}
@@ -142,6 +161,7 @@ async def send_verification_email(data: Data, background_tasks: BackgroundTasks)
 
 @router.post("/login")
 async def login(data: Data):
+    sql_helper = SQLHelper()
     crypto_manager = CryptoManager()
     email = data.email
     password = crypto_manager.hash_data(data.password.encode())
@@ -172,7 +192,7 @@ async def debug(data: Data):
     supabase: Client = create_client(Envs.SB_url, Envs.SB_key)
     crypto_manager = CryptoManager()
     uid = crypto_manager.hash_data(data.email.encode())
-    supabase.table("account_tokens").delete().eq("id", uid).execute()
+    supabase.table("profile_tokens").delete().eq("id", uid).execute()
     supabase.table("accounts").delete().eq("id", uid).execute()
     return {"message": "Debug complete. User data deleted."}
     
