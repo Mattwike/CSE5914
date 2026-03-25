@@ -1,0 +1,54 @@
+:root{
+  /* Colors - Ohio State inspired */
+  --color-primary: #BB0000;
+  --color-primary-dark: #990000;
+  --color-accent: #BB0000;
+  --color-bg: #FFFFFF;
+  --color-surface: #F7F7F7;
+  --color-border: #E6E6E6;
+  --color-text: #111827;
+  --color-text-muted: #666666;
+  --color-success: #107C10;
+  --color-danger: #B00020;
+
+  /* Spacing scale */
+  --space-xxs: 4px;
+  --space-xs: 8px;
+  --space-sm: 12px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+
+  /* Typography sizes */
+  --font-size-xs: 12px;
+  --font-size-sm: 14px;
+  --font-size-md: 16px;
+  --font-size-lg: 20px;
+  --font-size-xl: 28px;
+  --line-height: 1.5;
+
+  /* Radii and container */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --container-max-width: 1100px;
+  --card-max-width: 420px;
+
+  /* Shadows (subtle) */
+  --shadow-sm: 0 1px 2px rgba(16,24,40,0.04);
+  --shadow-md: 0 6px 16px rgba(16,24,40,0.06);
+
+  /* Focus ring */
+  --focus-ring: 2px solid rgba(187,0,0,0.15);
+
+  /* Fonts */
+  --font-sans: Inter, "Helvetica Neue", Arial, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root{
+    --color-bg: #0b1220;
+    --color-surface: #0f1724;
+    --color-text: #e6eef6;
+    --color-text-muted: #9aa6b2;
+  }
+}
