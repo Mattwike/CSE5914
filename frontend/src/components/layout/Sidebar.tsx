@@ -1,7 +1,7 @@
 import React from 'react'
 import { NavLink } from 'react-router-dom'
 import '../../styles/layout.css'
-import { Heading, Text } from '../ui'
+import { Heading } from '../ui'
 
 type SidebarProps = React.HTMLAttributes<HTMLElement> & {
   children?: React.ReactNode
