@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, BackgroundTasks
 from fastapi_mail import FastMail, MessageSchema, ConnectionConfig, MessageType
 from fastapi import HTTPException, status
 from fastapi.responses import JSONResponse
@@ -51,7 +51,7 @@ conf = ConnectionConfig(
 router = APIRouter(prefix="/account", tags=["account"])
 
 @router.post("/create_account")
-async def create_account(data: Data):
+async def create_account(data: Data, background_tasks: BackgroundTasks):
     crypto_manager = CryptoManager()
     sql_helper = SQLHelper()
     encrypted_password = crypto_manager.hash_data(data.password.encode())
@@ -128,8 +128,8 @@ async def create_account(data: Data):
         )
         
         fm = FastMail(conf)
-        await fm.send_message(message)
-
+        background_tasks.add_task(fm.send_message, message)
+        
     except:
         raise HTTPException(status_code=500, detail="Email construction error")
 
@@ -176,7 +176,7 @@ async def verify_token(token: str, user_email: str):
     
 
 @router.post("/resend_verification_email")
-async def send_verification_email(data: Data):
+async def send_verification_email(data: Data, background_tasks: BackgroundTasks):
     crypto_manager = CryptoManager()
     email = data.email
     if not (email.endswith("@osu.edu") or email.endswith("@buckeyemail.osu.edu")):
@@ -193,7 +193,7 @@ async def send_verification_email(data: Data):
     )
 
     fm = FastMail(conf)
-    await fm.send_message(message)
+    background_tasks.add_task(fm.send_message, message)
     return {"message": "Account created. Please check your email to verify your account."}
 
 @router.post("/login")
@@ -243,7 +243,7 @@ async def debug(data: Data):
     
 
 @router.delete("/delete_account")
-async def deleteAccount(data: Data):
+async def deleteAccount(data: Data, background_tasks: BackgroundTasks):
     pass
 
 
