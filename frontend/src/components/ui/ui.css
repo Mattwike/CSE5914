@@ -96,6 +96,26 @@ input:-webkit-autofill:hover {
   box-shadow: 0 10px 30px rgba(16,24,40,0.08);
 }
 
+/* Animated card wrapper used for subtle entrance + hover lift */
+.animated-card {
+  will-change: transform, opacity;
+  transform: translateY(8px);
+  opacity: 0;
+  transition: transform var(--motion-base) var(--easing-base), opacity var(--motion-base) var(--easing-base), box-shadow var(--motion-base) var(--easing-base);
+}
+.animated-card.is-visible { transform: translateY(0); opacity: 1; }
+.animated-card:focus { outline: none; }
+.animated-card:focus-visible { outline: var(--focus-ring); border-radius: inherit; }
+
+/* Hover effect for animated-card when lift is applied (card--lift class present) */
+.animated-card.card--lift:hover { transform: translateY(-6px); box-shadow: 0 12px 30px rgba(16,24,40,0.08); }
+
+@media (prefers-reduced-motion: reduce) {
+  .animated-card,
+  .card--lift,
+  .motion-fade { transition: none !important; transform: none !important; }
+}
+
 /* Respect user motion preferences */
 @media (prefers-reduced-motion: reduce) {
   .motion-fade,

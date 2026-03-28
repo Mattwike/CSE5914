@@ -5,5 +5,6 @@ export { default as Heading } from './Heading'
 export { default as Text } from './Text'
 export { default as Container } from './Container'
 export { default as LazyImage } from './LazyImage'
+export { default as AnimatedCard } from './AnimatedCard'
 
 export * from './Button'

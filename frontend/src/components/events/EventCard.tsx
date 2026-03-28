@@ -1,5 +1,5 @@
 import React from 'react'
-import { Card, Heading, Text, Button } from '../ui'
+import { AnimatedCard, Heading, Text, Button } from '../ui'
 import LazyImage from '../ui/LazyImage'
 import '../../styles/events.css'
 
@@ -24,7 +24,7 @@ const EventCard: React.FC<Props> = ({ event, onView, className = '' }) => {
   const thumb = thumbnail || '/block.jpg'
 
   return (
-    <Card className={`event-card ${className}`.trim()} aria-labelledby={`event-title-${id}`}>
+    <AnimatedCard className={`event-card ${className}`.trim()} aria-labelledby={`event-title-${id}`}>
       <div className="event-card-media">
         <LazyImage src={thumb} alt={`${title} thumbnail`} width={320} height={180} className="event-card-thumb" />
       </div>
@@ -41,7 +41,7 @@ const EventCard: React.FC<Props> = ({ event, onView, className = '' }) => {
           <Button onClick={() => onView?.(id)}>View Event</Button>
         </div>
       </div>
-    </Card>
+    </AnimatedCard>
   )
 }
 
