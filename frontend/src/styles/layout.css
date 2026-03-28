@@ -36,12 +36,14 @@
 
 .main-content {
   min-height: 60vh;
+  position: relative;
+  z-index: 3; /* ensure main content (events list) appears above the hero gradient */
 }
 
 .page-grid { display: grid; grid-template-columns: 240px 1fr; gap: var(--space-4); }
 
 /* TopNav styles */
-.topnav-wrapper { background: var(--color-bg); border-bottom: 1px solid var(--color-border); }
+.topnav-wrapper { background: var(--color-bg); border-bottom: 1px solid var(--color-border); position: relative; z-index: 20; }
 .topnav { display:flex; align-items:center; gap: var(--space-md); padding: var(--space-sm) 0; }
 .topnav-left { flex: 0 0 auto; }
 .topnav-center { flex: 1 1 auto; display:flex; justify-content:center; }

@@ -37,3 +37,132 @@
   justify-content: flex-end;
   margin-top: var(--space-md);
 }
+
+/* Event hero background anchored to viewport with faded overlay */
+.event-hero {
+  position: relative;
+  margin-top: var(--space-md); /* gap below TopNav */
+  padding: 0; /* content inside will provide spacing */
+  overflow: visible;
+  background: transparent !important; /* allow fixed background to show through */
+  box-shadow: none !important;
+  border: none !important;
+}
+
+.event-hero::before {
+  content: '';
+  position: fixed; /* anchored to viewport */
+  left: 0;
+  right: 0;
+  top: calc(var(--space-lg) + 0px); /* small gap from nav; adjust if needed */
+  height: 320px;
+  background-image: url('/campus_crowd.jpg');
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  opacity: 0.36; /* faded into background */
+  z-index: -2; /* keep background behind page content */
+  pointer-events: none;
+}
+
+.event-hero .event-hero-inner {
+  position: relative; /* put text above the fixed bg */
+  z-index: 2;
+  padding: calc(var(--space-lg) + 48px) var(--space-md) var(--space-lg); /* push text down so it's centered over image */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+/* Gradient overlay to softly fade image into page background */
+.event-hero::after {
+  content: '';
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: calc(var(--space-lg) + 0px);
+  height: 320px;
+  /* fade from transparent into the page background color */
+  background: linear-gradient(180deg, rgba(255,255,255,0) 40%, var(--color-bg) 95%);
+  opacity: 1;
+  z-index: -1; /* above the image but still behind main content */
+  pointer-events: none;
+}
+
+.event-hero .event-hero-image { display:none; }
+
+@media (max-width: 767px) {
+  .event-hero::before { background-attachment: scroll; height: 220px; }
+  .event-hero .event-hero-inner { padding-top: calc(var(--space-lg) + 28px); }
+  .event-hero::after { height: 220px; top: calc(var(--space-lg) + 0px); background: linear-gradient(180deg, rgba(255,255,255,0) 50%, var(--color-bg) 98%); }
+}
+
+/* Empty state */
+.empty-state {
+  padding: var(--space-lg);
+  text-align: center;
+  color: var(--color-text-muted);
+}
+
+/* Increase hero title size when inside the hero */
+.event-hero .type-xl {
+  font-size: calc(var(--font-size-xl) + 8px);
+  line-height: 1.05;
+}
+
+/* Event card media */
+.event-card-media {
+  width: 100%;
+  overflow: hidden;
+  border-radius: calc(var(--radius-md) - 4px);
+  margin-bottom: var(--space-sm);
+}
+
+.event-card-thumb {
+  width: 100%;
+  height: auto;
+  display: block;
+  object-fit: cover;
+}
+
+.event-card-body { display: flex; flex-direction: column; gap: var(--space-sm); }
+
+/* Event list item layout */
+.event-list-item .event-list-inner {
+  display: flex;
+  gap: var(--space-md);
+  align-items: center;
+}
+.event-list-thumb-wrap { flex: 0 0 120px; max-width: 120px; }
+.event-list-thumb { width: 100%; height: auto; display: block; object-fit: cover; border-radius: 6px; }
+.event-list-content { flex: 1 1 auto; }
+.event-list-actions { flex: 0 0 auto; }
+
+/* Skeleton helpers */
+.event-skeleton.card { padding: var(--space-md); border-radius: var(--radius-md); background: var(--color-surface); box-shadow: var(--shadow-sm); }
+.skeleton { background: linear-gradient(90deg, rgba(0,0,0,0.03) 25%, rgba(0,0,0,0.06) 50%, rgba(0,0,0,0.03) 75%); background-size: 200% 100%; animation: skeleton-shimmer 1.2s linear infinite; border-radius: 4px; }
+.skeleton.media { width: 100%; height: 140px; margin-bottom: var(--space-sm); }
+.skeleton.title { width: 60%; height: 18px; margin-bottom: var(--space-xs); }
+.skeleton.meta { width: 40%; height: 14px; }
+
+@keyframes skeleton-shimmer { 0% { background-position: 200% 0 } 100% { background-position: -200% 0 } }
+
+/* visually-hidden utility used for accessible labels */
+.visually-hidden { position: absolute !important; height: 1px; width: 1px; overflow: hidden; clip: rect(1px, 1px, 1px, 1px); white-space: nowrap; border: 0; padding: 0; margin: -1px }
+
+/* Responsive grid tweaks for tighter phones */
+@media (max-width: 420px) {
+  .events-grid { gap: var(--space-md); grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+  .event-hero::before { height: 180px; }
+  .event-hero::after { height: 180px }
+}
+
+/* Small gap under filters so the grid breathes */
+.filters-grid { margin-bottom: var(--space-md); }
+
+@media (max-width: 767px) {
+  .event-hero .type-xl { font-size: calc(var(--font-size-xl) + 4px); }
+}
+

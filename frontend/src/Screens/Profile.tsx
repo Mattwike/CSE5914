@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { PageWrapper, Sidebar, MainContent } from '../components/layout'
+import { PageWrapper, MainContent } from '../components/layout'
 import { Button, Card, Heading, Input, Text } from '../components/ui'
 
 const Profile: React.FC = () => {
@@ -36,9 +36,7 @@ const Profile: React.FC = () => {
 
   return (
     <PageWrapper>
-      <div className="app-layout">
-        <Sidebar />
-        <MainContent>
+      <MainContent>
           <Heading level={1}>Profile</Heading>
           <Text as="p" className="mb-1">Update your profile details below.</Text>
 
@@ -193,7 +191,6 @@ const Profile: React.FC = () => {
             </div>
           </Card>
         </MainContent>
-      </div>
     </PageWrapper>
   )
 }

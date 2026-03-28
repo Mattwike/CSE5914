@@ -1,7 +1,7 @@
 import React from "react";
 import { useNavigate, NavLink } from "react-router-dom";
 import { Button, Card, Heading, Text } from "../components/ui";
-import { PageWrapper, Sidebar, MainContent } from "../components/layout";
+import { PageWrapper, MainContent } from "../components/layout";
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -13,19 +13,7 @@ const Dashboard: React.FC = () => {
 
   return (
     <PageWrapper>
-      <div className="app-layout">
-        <Sidebar>
-          <Heading level={2} className="mb-3">App Name</Heading>
-          <ul className="sidebar-nav">
-            <li><NavLink to="/dashboard" className={({isActive}) => isActive ? 'active' : ''}>Home</NavLink></li>
-            <li><NavLink to="/events" className={({isActive}) => isActive ? 'active' : ''}>Events</NavLink></li>
-            <li><NavLink to="/profile" className={({isActive}) => isActive ? 'active' : ''}>Profile</NavLink></li>
-            <li><NavLink to="/settings" className={({isActive}) => isActive ? 'active' : ''}>Settings</NavLink></li>
-          </ul>
-          <Button variant="ghost" onClick={handleLogout}>Logout</Button>
-        </Sidebar>
-
-        <MainContent>
+      <MainContent>
           <header className="mb-4">
             <Heading level={1}>Welcome Back!</Heading>
             <Text>Here is what's happening with your account today.</Text>
@@ -55,7 +43,6 @@ const Dashboard: React.FC = () => {
             </Card>
           </section>
         </MainContent>
-      </div>
     </PageWrapper>
   );
 };
