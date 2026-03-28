@@ -21,6 +21,13 @@
   border-color: var(--color-primary-dark);
 }
 .btn--primary:hover { background: var(--color-primary-dark); }
+/* Danger variant (red) matching primary motion/hover behavior */
+.btn--danger {
+  background: var(--color-danger);
+  color: #fff;
+  border-color: #900016;
+}
+.btn--danger:hover { background: #8d0016; }
 .btn--ghost {
   background: transparent;
   border-color: var(--color-border);

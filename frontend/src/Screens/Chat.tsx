@@ -105,6 +105,9 @@ const Chat: React.FC = () => {
                   <li>Who is this event best for?</li>
                 </ul>
               </div>
+              <div className="brutus-wrap" aria-hidden="true">
+                <LazyImage src="/brutus.png" alt="Brutus" width={120} height={120} className="brutus-img" />
+              </div>
             </aside>
           </div>
         </div>

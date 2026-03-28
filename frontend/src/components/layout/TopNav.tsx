@@ -71,7 +71,7 @@ const TopNav: React.FC = () => {
           </div>
 
           <div className="topnav-right">
-            <Button variant={isLanding ? 'primary' : 'ghost'} onClick={handleAuthClick}>
+            <Button variant={isLanding ? 'primary' : 'danger'} onClick={handleAuthClick}>
               {isLanding ? 'Sign in' : 'Sign out'}
             </Button>
           </div>
