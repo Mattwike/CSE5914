@@ -1,10 +1,12 @@
 {
   "buildCommand": "cd frontend && npm install && npm run build",
   "outputDirectory": "frontend/dist",
-  "routes": [
-    { "src": "/api/(.*)", "dest": "/api/index.py" },
-    { "src": "/(account|events|groups|recommendations)/(.*)", "dest": "/api/index.py" },
-    { "handle": "filesystem" },
-    { "src": "/(.*)", "dest": "/index.html" }
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api/index.py" },
+    { "source": "/account/(.*)", "destination": "/api/index.py" },
+    { "source": "/events/(.*)", "destination": "/api/index.py" },
+    { "source": "/groups/(.*)", "destination": "/api/index.py" },
+    { "source": "/recommendations/(.*)", "destination": "/api/index.py" },
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
