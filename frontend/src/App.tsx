@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import Home from "./Screens/Home";
 import Login from "./Screens/Login";
 import CreateAccount from "./Screens/CreateAccount";
@@ -7,10 +7,16 @@ import Dashboard from "./Screens/Dashboard";
 import EventsPage from "./Screens/EventsPage";
 import Profile from "./Screens/Profile";
 import Settings from "./Screens/Settings";
+import { TopNav } from './components/layout'
 
-function App() {
+function AppRoutes() {
+  const location = useLocation()
+  const hideTop = location.pathname === '/login' || location.pathname === '/create-account'
+
   return (
-    <BrowserRouter>
+    <>
+      {!hideTop && <TopNav />}
+
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
@@ -21,6 +27,14 @@ function App() {
         <Route path="/profile" element={<Profile />} />
         <Route path="/settings" element={<Settings />} />
       </Routes>
+    </>
+  )
+}
+
+function App() {
+  return (
+    <BrowserRouter>
+      <AppRoutes />
     </BrowserRouter>
   );
 }

@@ -77,3 +77,31 @@ input:-webkit-autofill:hover {
 .table-placeholder { padding: var(--space-sm); background: var(--color-muted); border-radius: var(--radius-sm); margin-top: var(--space-sm); }
 .error-text { color: var(--color-danger); margin-top: var(--space-sm); }
 .status-active { color: var(--color-success); font-weight: 600; }
+
+/* Motion utilities */
+.motion-fade {
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity var(--motion-base) var(--easing-base), transform var(--motion-base) var(--easing-base);
+}
+.motion-fade.is-visible {
+  opacity: 1; transform: translateY(0);
+}
+
+.card--lift {
+  transition: box-shadow var(--motion-fast) var(--easing-quick), transform var(--motion-fast) var(--easing-quick);
+}
+.card--lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 30px rgba(16,24,40,0.08);
+}
+
+/* Respect user motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .motion-fade,
+  .card--lift,
+  .btn {
+    transition: none !important;
+    transform: none !important;
+  }
+}
