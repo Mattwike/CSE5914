@@ -55,8 +55,8 @@
   left: 0;
   right: 0;
   top: calc(var(--space-lg) + 0px); /* small gap from nav; adjust if needed */
-  height: 320px;
-  background-image: url('/campus_crowd.jpg');
+  height: 60vh; /* show more of the background image */
+  background-image: var(--event-hero-image, url('/campus_crowd.jpg'));
   background-size: cover;
   background-position: center center;
   background-repeat: no-repeat;
@@ -82,10 +82,11 @@
   position: fixed;
   left: 0;
   right: 0;
-  top: calc(var(--space-lg) + 0px);
-  height: 320px;
-  /* fade from transparent into the page background color */
-  background: linear-gradient(180deg, rgba(255,255,255,0) 40%, var(--color-bg) 95%);
+  /* position overlay to cover the bottom quarter of the hero image (hero height = 60vh -> bottom quarter = 15vh) */
+  top: calc(var(--space-lg) + 45vh);
+  height: 15vh;
+  /* fade from transparent directly to the page background */
+  background: linear-gradient(180deg, rgba(255,255,255,0) 0%, var(--color-bg) 100%);
   opacity: 1;
   z-index: -1; /* above the image but still behind main content */
   pointer-events: none;
@@ -94,9 +95,10 @@
 .event-hero .event-hero-image { display:none; }
 
 @media (max-width: 767px) {
-  .event-hero::before { background-attachment: scroll; height: 220px; }
+  .event-hero::before { background-attachment: scroll; height: 40vh; }
   .event-hero .event-hero-inner { padding-top: calc(var(--space-lg) + 28px); }
-  .event-hero::after { height: 220px; top: calc(var(--space-lg) + 0px); background: linear-gradient(180deg, rgba(255,255,255,0) 50%, var(--color-bg) 98%); }
+  /* hero height 40vh -> bottom quarter = 10vh */
+  .event-hero::after { top: calc(var(--space-lg) + 30vh); height: 10vh; background: linear-gradient(180deg, rgba(255,255,255,0) 0%, var(--color-bg) 100%); }
 }
 
 /* Empty state */
@@ -155,8 +157,9 @@
 /* Responsive grid tweaks for tighter phones */
 @media (max-width: 420px) {
   .events-grid { gap: var(--space-md); grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
-  .event-hero::before { height: 180px; }
-  .event-hero::after { height: 180px }
+  .event-hero::before { height: 36vh; }
+  /* hero height 36vh -> bottom quarter = 9vh */
+  .event-hero::after { top: calc(var(--space-lg) + 27vh); height: 9vh; background: linear-gradient(180deg, rgba(255,255,255,0) 0%, var(--color-bg) 100%); }
 }
 
 /* Small gap under filters so the grid breathes */

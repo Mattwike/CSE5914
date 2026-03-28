@@ -1,0 +1,5 @@
+@import './events.css';
+
+/* Small group-specific tweaks */
+.group-card { background: var(--color-surface); border-radius: var(--radius-md); padding: var(--space-md); }
+.group-card-thumb { border-radius: 8px; }

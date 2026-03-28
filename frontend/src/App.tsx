@@ -5,6 +5,7 @@ import CreateAccount from "./Screens/CreateAccount";
 import Verify from './Screens/Verify';
 import Dashboard from "./Screens/Dashboard";
 import EventsPage from "./Screens/EventsPage";
+import GroupsPage from "./Screens/GroupsPage";
 import Profile from "./Screens/Profile";
 import Settings from "./Screens/Settings";
 import Chat from './Screens/Chat'
@@ -25,6 +26,7 @@ function AppRoutes() {
         <Route path="/verify" element={<Verify />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/events" element={<EventsPage />} />
+        <Route path="/groups" element={<GroupsPage />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/chat" element={<Chat />} />
