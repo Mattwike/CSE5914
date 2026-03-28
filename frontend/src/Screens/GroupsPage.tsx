@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { PageWrapper, MainContent } from '../components/layout'
 import { GroupGrid, GroupFilters, GroupHero } from '../components/groups'
 import { Heading } from '../components/ui'
@@ -45,6 +46,10 @@ const GroupsPage: React.FC = () => {
 
   const locations = useMemo(() => Array.from(new Set(MOCK_GROUPS.map((g) => g.location).filter(Boolean) as string[])), [])
 
+  const navigate = useNavigate()
+
+  const handleGroupClick = (id: string) => navigate(`/groups/${id}`)
+
   return (
     <PageWrapper>
       <MainContent>
@@ -54,7 +59,7 @@ const GroupsPage: React.FC = () => {
 
           <GroupFilters search={search} setSearch={(s) => { setSearch(s); setPage(1) }} location={location} setLocation={(l) => { setLocation(l); setPage(1) }} locations={locations} />
 
-          <GroupGrid groups={paginated} />
+          <GroupGrid groups={paginated} onGroupClick={handleGroupClick} />
 
           <div className="flex-center pagination">
             <button className="btn" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}>Previous</button>

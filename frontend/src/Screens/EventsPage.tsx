@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { PageWrapper, MainContent } from '../components/layout'
 import { EventGrid, EventFilters, EventHero } from '../components/events'
 import { Input, Button, Heading } from '../components/ui'
@@ -55,6 +56,10 @@ const EventsPage: React.FC = () => {
 
   const locations = useMemo(() => Array.from(new Set(MOCK_EVENTS.map((e) => e.location).filter(Boolean) as string[])), [])
 
+  const navigate = useNavigate()
+
+  const handleEventClick = (id: string) => navigate(`/events/${id}`)
+
   return (
     <PageWrapper>
       <MainContent>
@@ -64,7 +69,7 @@ const EventsPage: React.FC = () => {
 
           <EventFilters search={search} setSearch={(s) => { setSearch(s); setPage(1) }} location={location} setLocation={(l) => { setLocation(l); setPage(1) }} locations={locations} />
 
-          <EventGrid events={paginated} loading={loading} />
+          <EventGrid events={paginated} loading={loading} onEventClick={handleEventClick} />
 
           <div className="flex-center pagination">
             <Button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}>Previous</Button>

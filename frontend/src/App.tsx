@@ -9,6 +9,8 @@ import GroupsPage from "./Screens/GroupsPage";
 import Profile from "./Screens/Profile";
 import Settings from "./Screens/Settings";
 import Chat from './Screens/Chat'
+import EventDetail from './Screens/EventDetail'
+import GroupDetail from './Screens/GroupDetail'
 import { TopNav } from './components/layout'
 
 function AppRoutes() {
@@ -26,7 +28,9 @@ function AppRoutes() {
         <Route path="/verify" element={<Verify />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/events" element={<EventsPage />} />
+        <Route path="/events/:id" element={<EventDetail />} />
         <Route path="/groups" element={<GroupsPage />} />
+        <Route path="/groups/:id" element={<GroupDetail />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/chat" element={<Chat />} />

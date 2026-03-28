@@ -38,6 +38,30 @@
   margin-top: var(--space-md);
 }
 
+/* Detail card (full-width information view used for Event/Group details) */
+.detail-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  padding: var(--space-lg);
+  box-shadow: var(--shadow-sm);
+}
+.detail-media img, .detail-media { width: 100%; height: auto; overflow: hidden; border-radius: 8px; }
+.detail-body { display:flex; flex-direction:column; gap: var(--space-md); }
+
+/* Centered detail variant */
+.detail-card--centered { align-items: center; text-align: center; max-width: 780px; margin: 0 auto; }
+.detail-title { width: 100%; }
+.detail-thumb-wrap { display:flex; justify-content:center; }
+.detail-thumb { max-width: 420px; width: 100%; height: auto; border-radius: 8px; }
+.detail-meta { color: var(--color-text-muted); font-size: var(--font-size-md); display:flex; flex-direction:column; gap: var(--space-xs); align-items:center; }
+.detail-stats { font-weight: 600; color: var(--color-text); }
+.detail-location { font-size: var(--font-size-sm); }
+.detail-description { max-width: 680px; }
+
+
 /* Event hero background anchored to viewport with faded overlay */
 .event-hero {
   position: relative;
