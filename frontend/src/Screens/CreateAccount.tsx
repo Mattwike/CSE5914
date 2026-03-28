@@ -3,7 +3,8 @@ import type { ChangeEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import useAuth from "../hooks/useAuth"
 import { PageWrapper, MainContent } from "../components/layout"
-import { Card, Heading, Input, Button, Text } from "../components/ui"
+import { Card, Heading, Input, Button, Text, LazyImage } from "../components/ui"
+import '../styles/home.css'
 
 const CreateAccount: React.FC = () => {
   const navigate = useNavigate();
@@ -34,20 +35,33 @@ const CreateAccount: React.FC = () => {
     }
   }
 
+  const img = '/ohio_outline.png'
+  const imgSrcSet = `${img} 1120w, ${img} 560w`
+
   return (
     <PageWrapper>
       <MainContent>
-        <Card className="login-card centered-card">
-          <Heading level={1}>Create Account</Heading>
+        <div className="welcome-page">
+          <div className="welcome-panel">
+            <div className="welcome-left" aria-hidden="true">
+              <LazyImage src={img} alt="Ohio outline" className="welcome-image" width={560} height={420} srcSet={imgSrcSet} sizes="(min-width:768px) 50vw, 100vw" />
+            </div>
 
-          <Input label="Email" type="email" placeholder="you@example.com" value={email} onChange={handleEmailChange} />
-          <Input label="Password" type="password" placeholder="Password" value={password} onChange={handlePasswordChange} />
-          <Input label="Confirm Password" type="password" placeholder="Confirm Password" value={confirmPassword} onChange={handleConfirmChange} />
+            <div className="welcome-right">
+              <Card className="login-card centered-card">
+                <Heading level={1}>Create Account</Heading>
 
-          <Button onClick={handleSignUp} disabled={loading}>{loading ? 'Processing...' : 'Sign Up'}</Button>
+                <Input label="Email" type="email" placeholder="you@example.com" value={email} onChange={handleEmailChange} />
+                <Input label="Password" type="password" placeholder="Password" value={password} onChange={handlePasswordChange} />
+                <Input label="Confirm Password" type="password" placeholder="Confirm Password" value={confirmPassword} onChange={handleConfirmChange} />
 
-          {error ? <Text as="p" className="error-text">{error}</Text> : null}
-        </Card>
+                <Button onClick={handleSignUp} disabled={loading}>{loading ? 'Processing...' : 'Sign Up'}</Button>
+
+                {error ? <Text as="p" className="error-text">{error}</Text> : null}
+              </Card>
+            </div>
+          </div>
+        </div>
       </MainContent>
     </PageWrapper>
   );
