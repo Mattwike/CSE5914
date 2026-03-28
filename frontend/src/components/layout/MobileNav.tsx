@@ -1,14 +1,16 @@
 import React from 'react'
-import { NavLink } from 'react-router-dom'
+import { NavLink, useLocation } from 'react-router-dom'
 import '../../styles/layout.css'
 
 const MobileNav: React.FC = () => {
+  const { pathname } = useLocation()
+  const isLanding = pathname === '/'
   return (
     <nav className="mobile-nav" aria-label="Mobile navigation">
-      <NavLink to="/dashboard" className={({isActive}) => "mobile-nav-link" + (isActive ? ' active' : '')}>Home</NavLink>
-      <NavLink to="/events" className={({isActive}) => "mobile-nav-link" + (isActive ? ' active' : '')}>Events</NavLink>
-      <NavLink to="/groups" className={({isActive}) => "mobile-nav-link" + (isActive ? ' active' : '')}>Groups</NavLink>
-      <NavLink to="/profile" className={({isActive}) => "mobile-nav-link" + (isActive ? ' active' : '')}>Profile</NavLink>
+      <NavLink to="/dashboard" onClick={(e) => { if (isLanding) e.preventDefault() }} className={({isActive}) => "mobile-nav-link" + (isActive ? ' active' : '') + (isLanding ? ' disabled' : '')}>Home</NavLink>
+      <NavLink to="/events" onClick={(e) => { if (isLanding) e.preventDefault() }} className={({isActive}) => "mobile-nav-link" + (isActive ? ' active' : '') + (isLanding ? ' disabled' : '')}>Events</NavLink>
+      <NavLink to="/groups" onClick={(e) => { if (isLanding) e.preventDefault() }} className={({isActive}) => "mobile-nav-link" + (isActive ? ' active' : '') + (isLanding ? ' disabled' : '')}>Groups</NavLink>
+      <NavLink to="/profile" onClick={(e) => { if (isLanding) e.preventDefault() }} className={({isActive}) => "mobile-nav-link" + (isActive ? ' active' : '') + (isLanding ? ' disabled' : '')}>Profile</NavLink>
     </nav>
   )
 }

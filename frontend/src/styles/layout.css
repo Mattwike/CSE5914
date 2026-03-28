@@ -52,6 +52,17 @@
 .topnav-links a { color: var(--color-text); text-decoration:none; padding: calc(var(--space-xs) + 2px) var(--space-sm); border-radius: var(--radius-sm); }
 .topnav-links a:hover { background: var(--color-surface); }
 
+/* Disabled state for landing page nav links */
+.topnav-links a.disabled {
+  color: #4b5563; /* deeper grey */
+  pointer-events: none;
+  cursor: default;
+  opacity: 0.9;
+}
+
+/* Mobile nav disabled state */
+.mobile-nav-link.disabled { color: #4b5563; pointer-events: none; cursor: default; opacity: 0.9 }
+
 /* Mobile nav styles */
 .mobile-nav { position: fixed; left:0; right:0; bottom:0; display:flex; justify-content:space-around; background: var(--color-bg); border-top:1px solid var(--color-border); padding: var(--space-xs) 0; z-index: 60; }
 .mobile-nav-link { color: var(--color-text); text-decoration:none; font-size:var(--font-size-sm); padding: var(--space-xs); }

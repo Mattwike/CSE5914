@@ -25,11 +25,41 @@ const TopNav: React.FC = () => {
 
           <div className="topnav-center">
             <ul className="topnav-links">
-              <li><NavLink to="/dashboard" className={({isActive}) => isActive ? 'active' : ''}>Home</NavLink></li>
-              <li><NavLink to="/events" className={({isActive}) => isActive ? 'active' : ''}>Events</NavLink></li>
-              <li><NavLink to="/groups" className={({isActive}) => isActive ? 'active' : ''}>Groups</NavLink></li>
-              <li><NavLink to="/profile" className={({isActive}) => isActive ? 'active' : ''}>Profile</NavLink></li>
-              <li><NavLink to="/settings" className={({isActive}) => isActive ? 'active' : ''}>Settings</NavLink></li>
+              <li>
+                <NavLink
+                  to="/dashboard"
+                  onClick={(e) => { if (isLanding) e.preventDefault() }}
+                  className={({isActive}) => `${isActive ? 'active' : ''} ${isLanding ? 'disabled' : ''}`.trim()}
+                >Home</NavLink>
+              </li>
+              <li>
+                <NavLink
+                  to="/events"
+                  onClick={(e) => { if (isLanding) e.preventDefault() }}
+                  className={({isActive}) => `${isActive ? 'active' : ''} ${isLanding ? 'disabled' : ''}`.trim()}
+                >Events</NavLink>
+              </li>
+              <li>
+                <NavLink
+                  to="/groups"
+                  onClick={(e) => { if (isLanding) e.preventDefault() }}
+                  className={({isActive}) => `${isActive ? 'active' : ''} ${isLanding ? 'disabled' : ''}`.trim()}
+                >Groups</NavLink>
+              </li>
+              <li>
+                <NavLink
+                  to="/profile"
+                  onClick={(e) => { if (isLanding) e.preventDefault() }}
+                  className={({isActive}) => `${isActive ? 'active' : ''} ${isLanding ? 'disabled' : ''}`.trim()}
+                >Profile</NavLink>
+              </li>
+              <li>
+                <NavLink
+                  to="/settings"
+                  onClick={(e) => { if (isLanding) e.preventDefault() }}
+                  className={({isActive}) => `${isActive ? 'active' : ''} ${isLanding ? 'disabled' : ''}`.trim()}
+                >Settings</NavLink>
+              </li>
             </ul>
           </div>
 
