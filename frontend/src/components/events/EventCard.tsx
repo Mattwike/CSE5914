@@ -22,11 +22,13 @@ const EventCard: React.FC<Props> = ({ event, onView, className = '' }) => {
   const { id, title, date, location, description, thumbnail } = event
   const displayDate = new Date(date).toLocaleString()
   const thumb = thumbnail || '/block.jpg'
+  const thumbSrcSet = `${thumb} 640w, ${thumb} 320w`
+  const thumbSizes = '(max-width: 420px) 100vw, 320px'
 
   return (
     <AnimatedCard className={`event-card ${className}`.trim()} aria-labelledby={`event-title-${id}`}>
       <div className="event-card-media">
-        <LazyImage src={thumb} alt={`${title} thumbnail`} width={320} height={180} className="event-card-thumb" />
+        <LazyImage src={thumb} alt={`${title} thumbnail`} width={320} height={180} className="event-card-thumb" srcSet={thumbSrcSet} sizes={thumbSizes} />
       </div>
 
       <div className="event-card-body">

@@ -14,11 +14,14 @@ type Props = {
 const EventListItem: React.FC<Props> = ({ id, title, date, thumbnail, onClick }) => {
   const displayDate = new Date(date).toLocaleString()
   const thumb = thumbnail || '/block.jpg'
+  const thumbSrcSet = `${thumb} 320w, ${thumb} 160w`
+  const thumbSizes = '(max-width: 420px) 100vw, 120px'
+
   return (
     <Card className="event-list-item">
       <div className="event-list-inner">
         <div className="event-list-thumb-wrap">
-          <LazyImage src={thumb} alt={`${title} thumbnail`} width={120} height={72} className="event-list-thumb" />
+          <LazyImage src={thumb} alt={`${title} thumbnail`} width={120} height={72} className="event-list-thumb" srcSet={thumbSrcSet} sizes={thumbSizes} />
         </div>
         <div className="event-list-content">
           <Heading level={3}>{title}</Heading>
