@@ -7,6 +7,7 @@ import Dashboard from "./Screens/Dashboard";
 import EventsPage from "./Screens/EventsPage";
 import Profile from "./Screens/Profile";
 import Settings from "./Screens/Settings";
+import Chat from './Screens/Chat'
 import { TopNav } from './components/layout'
 
 function AppRoutes() {
@@ -26,6 +27,7 @@ function AppRoutes() {
         <Route path="/events" element={<EventsPage />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/settings" element={<Settings />} />
+        <Route path="/chat" element={<Chat />} />
       </Routes>
     </>
   )
