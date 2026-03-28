@@ -35,6 +35,8 @@ class Envs:
     db_name = os.getenv("DB_NAME")
     database_url = f"postgresql+psycopg2://{db_username}:{db_password}@{db_host}:{db_port}/{db_name}?sslmode=require"
 
+engine = create_engine(Envs.database_url, pool_pre_ping=True)
+
 conf = ConnectionConfig(
     MAIL_USERNAME=Envs.MAIL_USERNAME,
     MAIL_PASSWORD=Envs.MAIL_PASSWORD,
@@ -70,14 +72,13 @@ async def create_account(data: Data, background_tasks: BackgroundTasks):
             content={"message": "Crypto Error"}
         )
     try:
-        engine  = create_engine(Envs.database_url)
         query = sql_helper.load_query("sql_queries/create_account.sql")
     except:
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={"message": "Database connection error"}
         )
-    
+
     try:
         with engine.connect() as connection:
             result = connection.execute(query, {
@@ -142,7 +143,6 @@ async def verify_token(token: str, user_email: str):
         crypto_manager = CryptoManager()
         token = crypto_manager.decrypt_data(bytes.fromhex(token), base64.urlsafe_b64decode(os.getenv('ENCRYPTION_KEY'))).decode()
         user_email = crypto_manager.decrypt_data(bytes.fromhex(user_email), base64.urlsafe_b64decode(os.getenv('ENCRYPTION_KEY'))).decode()
-        engine  = create_engine(Envs.database_url)
     except:
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -203,7 +203,6 @@ async def login(data: Data):
     user_email = data.email
     hashed_password = crypto_manager.hash_data(data.password.encode())
     
-    engine  = create_engine(Envs.database_url)
     query = sql_helper.load_query("sql_queries/login.sql")
     with engine.connect() as connection:
         result = connection.execute(query, {
