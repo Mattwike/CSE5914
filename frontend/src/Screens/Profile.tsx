@@ -37,10 +37,12 @@ const Profile: React.FC = () => {
   return (
     <PageWrapper>
       <MainContent>
-          <Heading level={1}>Profile</Heading>
-          <Text as="p" className="mb-1">Update your profile details below.</Text>
+        <Heading level={1}>Profile</Heading>
+        <Text as="p" className="mb-1">Update your profile details below.</Text>
 
-          <Card className="card card--elevated mt-2">
+        <section className="profile-section">
+          <Heading level={2} className="section-title">Bio</Heading>
+          <Card className="card card--elevated section-card mt-2">
             <div className="form-stack">
               <Input
                 label="First Name"
@@ -72,15 +74,19 @@ const Profile: React.FC = () => {
                 </select>
               </div>
 
-              <Button onClick={handleSave}>Save</Button>
+              <div className="section-actions">
+                <Button className="btn--small" onClick={handleSave}>Save</Button>
+              </div>
               {savedMessage ? <Text as="p" className="status-active">{savedMessage}</Text> : null}
             </div>
           </Card>
+        </section>
 
-          <Card className="card card--elevated mt-2">
+        <section className="profile-section">
+          <Heading level={2} className="section-title">Event Preferences</Heading>
+          <Card className="card card--elevated section-card mt-2">
             <div className="form-stack">
               <div>
-                <Heading level={2}>Event Preferences</Heading>
                 <Text as="p">Tell us what kinds of events match your personality and routine.</Text>
               </div>
 
@@ -186,11 +192,14 @@ const Profile: React.FC = () => {
                 </select>
               </div>
 
-              <Button onClick={savePreferences}>Save Preferences</Button>
+              <div className="section-actions">
+                <Button className="btn--small" onClick={savePreferences}>Save Preferences</Button>
+              </div>
               {preferenceMessage ? <Text as="p" className="status-active">{preferenceMessage}</Text> : null}
             </div>
           </Card>
-        </MainContent>
+        </section>
+      </MainContent>
     </PageWrapper>
   )
 }

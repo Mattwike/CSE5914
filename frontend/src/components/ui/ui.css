@@ -85,6 +85,40 @@ input:-webkit-autofill:hover {
 .error-text { color: var(--color-danger); margin-top: var(--space-sm); }
 .status-active { color: var(--color-success); font-weight: 600; }
 
+/* Section helpers used on profile and similar pages to match login card visual */
+.section-title {
+  margin: var(--space-lg) 0 var(--space-md);
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+.section-card {
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  margin-bottom: var(--space-lg);
+}
+.section-actions {
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap: var(--space-sm);
+  margin-top: var(--space-sm);
+  /* allow buttons to size naturally to their content; no fixed height */
+}
+
+/* Small button variant used inside stacked section cards */
+.btn--small {
+  padding: calc(var(--space-xs)) var(--space-sm);
+  font-size: 0.95rem;
+  border-radius: calc(var(--radius-sm));
+  width: 50%;
+  height: auto;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
 /* Motion utilities */
 .motion-fade {
   opacity: 0;
