@@ -1,0 +1,51 @@
+@import './variables.css';
+
+.dashboard-hero {
+  display: grid;
+  grid-template-columns: 1fr 360px;
+  gap: var(--space-lg);
+  align-items: center;
+  margin-bottom: var(--space-lg);
+}
+
+.hero-left {
+  display:flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.hero-right img { display:block; }
+
+/* Ensure stats inside hero align neatly and collapse on small screens */
+.hero-stats .stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-md);
+}
+
+@media (max-width: 767px) {
+  .hero-stats .stats-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.dashboard-feature-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-lg);
+  align-items: start;
+}
+
+.dashboard-preview { display:flex; justify-content:center; }
+.dashboard-preview .event-card,
+.dashboard-preview .group-card { max-width: 340px; width: 100%; }
+
+@media (max-width: 767px) {
+  .dashboard-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-feature-grid {
+    grid-template-columns: 1fr;
+  }
+}
