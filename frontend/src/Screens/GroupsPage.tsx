@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { PageWrapper, MainContent } from '../components/layout'
 import { GroupGrid, GroupFilters, GroupHero } from '../components/groups'
-import { Heading } from '../components/ui'
+import { Heading, Button } from '../components/ui'
 import '../styles/events.css'
 
 type GroupItem = {
@@ -55,7 +55,12 @@ const GroupsPage: React.FC = () => {
       <MainContent>
         <div className="stack-vertical">
           <GroupHero image="/union.jpg" />
-          <Heading level={1}>Looking for groups</Heading>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Heading level={1}>Looking for groups</Heading>
+            <div>
+              <Button onClick={() => navigate('/groups/create')}>Create Group</Button>
+            </div>
+          </div>
 
           <GroupFilters search={search} setSearch={(s) => { setSearch(s); setPage(1) }} location={location} setLocation={(l) => { setLocation(l); setPage(1) }} locations={locations} />
 

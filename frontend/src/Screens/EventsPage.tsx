@@ -65,7 +65,12 @@ const EventsPage: React.FC = () => {
       <MainContent>
         <div className="stack-vertical">
           <EventHero />
-          <Heading level={1}>Events</Heading>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Heading level={1}>Events</Heading>
+            <div>
+              <Button onClick={() => navigate('/events/create')}>Create Event</Button>
+            </div>
+          </div>
 
           <EventFilters search={search} setSearch={(s) => { setSearch(s); setPage(1) }} location={location} setLocation={(l) => { setLocation(l); setPage(1) }} locations={locations} />
 

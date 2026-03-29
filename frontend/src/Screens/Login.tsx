@@ -55,6 +55,9 @@ function Login() {
                 </div>
 
                 {error ? <Text as="p" className="error-text">{error}</Text> : null}
+                <div className="text-center mt-2">
+                  <Button variant="ghost" onClick={() => navigate(-1)}>Back</Button>
+                </div>
               </Card>
             </div>
           </div>
