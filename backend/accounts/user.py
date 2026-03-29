@@ -120,17 +120,17 @@ async def create_account(data: Data, background_tasks: BackgroundTasks):
     </div>
     """
 
-    try: 
+    try:
         message = MessageSchema(
             subject="Verify Your Email Address",
             recipients=[email],
             body=html_body,
             subtype=MessageType.html
         )
-        
+
         fm = FastMail(conf)
-        background_tasks.add_task(fm.send_message, message)
-        
+        await fm.send_message(message)
+
     except:
         raise HTTPException(status_code=500, detail="Email construction error")
 
