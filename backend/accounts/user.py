@@ -70,7 +70,7 @@ async def create_account(data: Data, background_tasks: BackgroundTasks):
             content={"message": "Crypto Error"}
         )
     try:
-        engine  = create_engine(Envs.database_url)
+        engine = create_engine(Envs.database_url)
         query = sql_helper.load_query("sql_queries/create_account.sql")
     except:
         return JSONResponse(
