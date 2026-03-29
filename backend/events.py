@@ -15,6 +15,8 @@ async def delete_event(event_id: str):
     pass
 
 @router.get("/{user_id}/event")
+async def get_user_events(user_id: str):
+    pass
 
 @router.post("/{event_id}/modify")
 async def change_time(eventID: str, userID: str, new_start_time: str, new_end_time: str, new_location: str):
