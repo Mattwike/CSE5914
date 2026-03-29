@@ -102,37 +102,27 @@ async def create_account(data: Data, background_tasks: BackgroundTasks):
 
     verify_link = f"{Envs.website_url}/verify?token={encrypted_token}&user_email={encrypted_email}"
 
-    html_body = f"""
-    <p>Hello USER_FNAME USER_LNAME,</p>
-    <p>Thank you for creating an account with COMPANY NAME. Please click the button below to verify your account:</p>
-    <div style="margin: 20px 0;">
-        <a href="{verify_link}" 
-        style="background-color: #4CAF50; 
-                color: white; 
-                padding: 14px 25px; 
-                text-align: center; 
-                text-decoration: none; 
-                display: inline-block; 
-                border-radius: 5px; 
-                font-weight: bold;">
-            Verify Account
-        </a>
-    </div>
-    """
+    plain_body = (
+        f"Please verify your account by clicking the link below:\n\n"
+        f"{verify_link}\n\n"
+        f"If you did not create an account, you can ignore this email."
+    )
 
-    try: 
+    try:
         message = MessageSchema(
             subject="Verify Your Email Address",
             recipients=[email],
-            body=html_body,
-            subtype=MessageType.html
+            body=plain_body,
+            subtype=MessageType.plain
         )
-        
+
         fm = FastMail(conf)
-        background_tasks.add_task(fm.send_message, message)
-        
-    except:
-        raise HTTPException(status_code=500, detail="Email construction error")
+        await fm.send_message(message)
+        print("EMAIL_SENT_OK")
+
+    except Exception as e:
+        print(f"EMAIL_FAILED: {type(e).__name__}: {e}")
+        raise HTTPException(status_code=500, detail="Failed to send verification email")
 
     return {"message": "Account created. Please check your email to verify your account."}
 
