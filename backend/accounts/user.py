@@ -27,7 +27,7 @@ class Envs:
     SB_url: str = os.getenv("SUPABASE_URL")
     SB_key: str = os.getenv("SUPABASE_KEY")
     debug = os.getenv("DEBUG")
-    website_url = os.getenv("VITE_WEBSITE_URL")
+    website_url = os.getenv("WEBSITE_URL")
     db_username = os.getenv("DB_USER")
     db_password = os.getenv("PASSWORD")
     db_host = os.getenv("HOST")
