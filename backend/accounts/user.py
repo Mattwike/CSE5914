@@ -129,10 +129,11 @@ async def create_account(data: Data, background_tasks: BackgroundTasks):
         )
 
         fm = FastMail(conf)
-        background_tasks.add_task(fm.send_message, message)
+        await fm.send_message(message)
 
-    except:
-        raise HTTPException(status_code=500, detail="Email construction error")
+    except Exception as e:
+        print(f"EMAIL_FAILED: {type(e).__name__}: {e}")
+        raise HTTPException(status_code=500, detail="Failed to send verification email")
 
     return {"message": "Account created. Please check your email to verify your account."}
 
