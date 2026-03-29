@@ -100,7 +100,7 @@ async def create_account(data: Data, background_tasks: BackgroundTasks):
                 content={"message": "Database connection error"}
             )
 
-    verify_link = f"{Envs.website_url}/account/verify_token?token={encrypted_token}&user_email={encrypted_email}"
+    verify_link = f"{Envs.website_url}/verify?token={encrypted_token}&user_email={encrypted_email}"
 
     html_body = f"""
     <p>Hello USER_FNAME USER_LNAME,</p>

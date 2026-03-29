@@ -1,41 +1,36 @@
 import React, { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
+import { verifyToken } from "../services/auth";
 import { PageWrapper, MainContent } from "../components/layout"
 import { Heading, Text } from "../components/ui"
-
-const API_BASE_URL = import.meta.env.VITE_WEBSITE_URL || "http://localhost:8000";
-
-interface VerifyResponse {
-  message: string;
-}
 
 const Verify: React.FC = () => {
   const [searchParams] = useSearchParams();
   const [status, setStatus] = useState<string>("Verifying your account...");
   const token = searchParams.get("token");
+  const userEmail = searchParams.get("user_email");
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!token) {
+    if (!token || !userEmail) {
       setStatus("No token found in the URL.");
       return;
     }
 
-    const verifyToken = async () => {
+    const verify = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/verify?token=${token}`);
-        const data: VerifyResponse = await response.json();
+        const data = await verifyToken(token, userEmail);
         setStatus(data.message);
-        if (response.ok) {
+        if (data.message === "Account verified successfully!") {
           setTimeout(() => navigate("/login"), 3000);
         }
-      } catch (error) {
-        setStatus("Could not connect to the verification server.");
+      } catch (error: any) {
+        setStatus(error?.message || "Could not connect to the verification server.");
       }
     };
 
-    verifyToken();
-  }, [token, navigate]);
+    verify();
+  }, [token, userEmail, navigate]);
 
   return (
     <PageWrapper>
