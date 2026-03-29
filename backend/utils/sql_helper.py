@@ -10,3 +10,4 @@ class SQLHelper:
         with open(full_path, 'r') as file:
             query = file.read()
         return text(query)
+    
