@@ -134,7 +134,7 @@ async def create_account(data: Data, background_tasks: BackgroundTasks):
 
     except Exception as e:
         print(f"EMAIL_FAILED: {type(e).__name__}: {e}")
-        raise HTTPException(status_code=500, detail="Email send error")
+        raise HTTPException(status_code=500, detail="Failed to send verification email")
 
     return {"message": "Account created. Please check your email to verify your account."}
 
