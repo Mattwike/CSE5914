@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react'
-import { PageWrapper, Sidebar, MainContent } from '../components/layout'
-import { EventGrid } from '../components/events'
+import { useNavigate } from 'react-router-dom'
+import { PageWrapper, MainContent } from '../components/layout'
+import { EventGrid, EventFilters, EventHero } from '../components/events'
 import { Input, Button, Heading } from '../components/ui'
 import '../styles/events.css'
 
@@ -27,6 +28,7 @@ const EventsPage: React.FC = () => {
   const [search, setSearch] = useState('')
   const [location, setLocation] = useState('')
   const [page, setPage] = useState(1)
+  const [loading, setLoading] = useState(false)
 
   // Filter logic lives in page (not in EventGrid)
   const filtered = useMemo(() => {
@@ -45,38 +47,42 @@ const EventsPage: React.FC = () => {
     return filtered.slice(start, start + PAGE_SIZE)
   }, [filtered, page])
 
+  // simulate a short loading delay whenever filters/page change
+  React.useEffect(() => {
+    setLoading(true)
+    const t = setTimeout(() => setLoading(false), 400)
+    return () => clearTimeout(t)
+  }, [search, location, page])
+
   const locations = useMemo(() => Array.from(new Set(MOCK_EVENTS.map((e) => e.location).filter(Boolean) as string[])), [])
+
+  const navigate = useNavigate()
+
+  const handleEventClick = (id: string) => navigate(`/events/${id}`)
 
   return (
     <PageWrapper>
-      <div className="app-layout">
-        <Sidebar />
-        <MainContent>
-          <div className="stack-vertical">
+      <MainContent>
+        <div className="stack-vertical">
+          <EventHero />
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Heading level={1}>Events</Heading>
-
-            <div className="grid filters-grid">
-              <div>
-                <Input placeholder="Search events" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1) }} />
-              </div>
-              <div>
-                <select className="input" value={location} onChange={(e) => { setLocation(e.target.value); setPage(1) }}>
-                  <option value="">All locations</option>
-                  {locations.map((l) => <option key={l} value={l}>{l}</option>)}
-                </select>
-              </div>
-            </div>
-
-            <EventGrid events={paginated} />
-
-            <div className="flex-center pagination">
-              <Button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}>Previous</Button>
-              <div>Page {page} of {totalPages}</div>
-              <Button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages}>Next</Button>
+            <div>
+              <Button onClick={() => navigate('/events/create')}>Create Event</Button>
             </div>
           </div>
-        </MainContent>
-      </div>
+
+          <EventFilters search={search} setSearch={(s) => { setSearch(s); setPage(1) }} location={location} setLocation={(l) => { setLocation(l); setPage(1) }} locations={locations} />
+
+          <EventGrid events={paginated} loading={loading} onEventClick={handleEventClick} />
+
+          <div className="flex-center pagination">
+            <Button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}>Previous</Button>
+            <div>Page {page} of {totalPages}</div>
+            <Button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages}>Next</Button>
+          </div>
+        </div>
+      </MainContent>
     </PageWrapper>
   )
 }

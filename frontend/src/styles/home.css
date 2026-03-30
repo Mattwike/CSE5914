@@ -1,0 +1,24 @@
+@import './variables.css';
+
+.welcome-page { display: flex; justify-content: center; align-items: center; padding: calc(var(--space-xl) * 1.5) 0; }
+.welcome-panel { width: 100%; max-width: 1100px; display: flex; gap: var(--space-lg); align-items: stretch; }
+
+.welcome-left, .welcome-right { flex: 1 1 0; display: flex; align-items: center; justify-content: center; }
+.welcome-left { background: linear-gradient(180deg, rgba(187,0,0,0.04), rgba(255,255,255,0)); border-radius: var(--radius-md); padding: var(--space-md); }
+.welcome-right { background: var(--color-surface); border-radius: var(--radius-md); padding: var(--space-lg); box-shadow: var(--shadow-sm); }
+
+.welcome-image { width: 100%; height: auto; max-width: 520px; border-radius: calc(var(--radius-md) - 4px); object-fit: contain; }
+
+.welcome-message { max-width: 420px; text-align: left; }
+.welcome-actions { margin-top: var(--space-md); display: flex; flex-direction: column; gap: var(--space-sm); align-items: center; }
+.welcome-actions .btn { width: auto; min-width: 160px; max-width: 320px; padding: calc(var(--space-sm)) var(--space-lg); }
+.welcome-actions .btn--ghost { background: transparent; border-color: transparent; color: var(--color-text-muted); padding: calc(var(--space-sm)) var(--space-md); }
+.welcome-actions .muted-note { text-align: center; color: var(--color-text-muted); margin: 0; }
+
+@media (max-width: 768px) {
+  .welcome-panel { flex-direction: column; padding: 0; }
+  .welcome-left, .welcome-right { width: 100%; }
+  .welcome-image { max-width: 360px; }
+  .welcome-message { text-align: center; }
+  .welcome-actions { align-items: center; }
+}
