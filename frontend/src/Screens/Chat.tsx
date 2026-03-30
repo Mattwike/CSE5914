@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react'
 import { PageWrapper, MainContent } from '../components/layout'
 import { Heading, Button, Text, LazyImage } from '../components/ui'
 import '../styles/chat.css'
+import { request } from '../services/api'
 
 type Message = { id: string; role: 'user' | 'ai' | 'system'; text: string }
 
@@ -45,16 +46,24 @@ const Chat: React.FC = () => {
     setMessages((m) => [...m, { id: loadingId, role: 'ai', text: 'Thinking…' }])
     setLoading(true)
 
-    preparePayload(userMsg.text)
-    // TODO: replace the simulated response with a call to your backend endpoint
-    // Example:
-    // const res = await fetch('/api/chat', { method: 'POST', body: JSON.stringify(payload) })
+    try {
+      const response = await request('/chat/basic', {
+        method: 'POST',
+        body: { message: userMsg.text } 
+      })
 
-    setTimeout(() => {
-      // Replace loading message with a mock AI response
-      setMessages((m) => m.map((x) => (x.id === loadingId ? { ...x, text: `Mock answer about: "${userMsg.text}"` } : x)))
+      setMessages((m) => 
+        m.map((x) => (x.id === loadingId ? { ...x, text: response.reply } : x))
+      )
+    } catch (error) {
+      console.error("Chat API Error:", error)
+      setMessages((m) => 
+        m.map((x) => (x.id === loadingId ? { ...x, text: "Sorry, I'm having trouble connecting to the server right now." } : x))
+      )
+    } finally {
       setLoading(false)
-    }, 800)
+    }
+    
   }
 
   return (
