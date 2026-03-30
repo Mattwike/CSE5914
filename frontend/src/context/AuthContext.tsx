@@ -36,7 +36,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setToken(storedToken)
         setUser(data)
       })
-      .catch((err) => {
+      .catch(() => {
         localStorage.removeItem('token')
       })
       .finally(() => {
