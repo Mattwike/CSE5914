@@ -1,0 +1,22 @@
+@import './variables.css';
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+
+:root {
+  --font-sans: Inter, "Helvetica Neue", Arial, sans-serif;
+}
+
+html { font-family: var(--font-sans); font-size: 16px; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; }
+
+body { font-size: var(--font-size-md); line-height: var(--line-height); color: var(--color-text); background: var(--color-bg); }
+
+h1, h2, h3, h4 { margin: 0 0 var(--space-sm) 0; font-weight: 700; color: var(--color-text); }
+
+h1 { font-size: var(--font-size-xl); line-height: 1.15; }
+h2 { font-size: calc(var(--font-size-lg) + 2px); }
+h3 { font-size: var(--font-size-lg); }
+h4 { font-size: var(--font-size-md); font-weight:600; }
+
+p, li, label { font-size: var(--font-size-md); color: var(--color-text); margin: 0 0 var(--space-sm) 0; }
+
+small, .muted { font-size: var(--font-size-sm); color: var(--color-text-muted); }
