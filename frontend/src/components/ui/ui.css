@@ -21,6 +21,13 @@
   border-color: var(--color-primary-dark);
 }
 .btn--primary:hover { background: var(--color-primary-dark); }
+/* Danger variant (red) matching primary motion/hover behavior */
+.btn--danger {
+  background: var(--color-danger);
+  color: #fff;
+  border-color: #900016;
+}
+.btn--danger:hover { background: #8d0016; }
 .btn--ghost {
   background: transparent;
   border-color: var(--color-border);
@@ -77,3 +84,85 @@ input:-webkit-autofill:hover {
 .table-placeholder { padding: var(--space-sm); background: var(--color-muted); border-radius: var(--radius-sm); margin-top: var(--space-sm); }
 .error-text { color: var(--color-danger); margin-top: var(--space-sm); }
 .status-active { color: var(--color-success); font-weight: 600; }
+
+/* Section helpers used on profile and similar pages to match login card visual */
+.section-title {
+  margin: var(--space-lg) 0 var(--space-md);
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+.section-card {
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+  margin-bottom: var(--space-lg);
+}
+.section-actions {
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap: var(--space-sm);
+  margin-top: var(--space-sm);
+  /* allow buttons to size naturally to their content; no fixed height */
+}
+
+/* Small button variant used inside stacked section cards */
+.btn--small {
+  padding: calc(var(--space-xs)) var(--space-sm);
+  font-size: 0.95rem;
+  border-radius: calc(var(--radius-sm));
+  width: 50%;
+  height: auto;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Motion utilities */
+.motion-fade {
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity var(--motion-base) var(--easing-base), transform var(--motion-base) var(--easing-base);
+}
+.motion-fade.is-visible {
+  opacity: 1; transform: translateY(0);
+}
+
+.card--lift {
+  transition: box-shadow var(--motion-fast) var(--easing-quick), transform var(--motion-fast) var(--easing-quick);
+}
+.card--lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 30px rgba(16,24,40,0.08);
+}
+
+/* Animated card wrapper used for subtle entrance + hover lift */
+.animated-card {
+  will-change: transform, opacity;
+  transform: translateY(8px);
+  opacity: 0;
+  transition: transform var(--motion-base) var(--easing-base), opacity var(--motion-base) var(--easing-base), box-shadow var(--motion-base) var(--easing-base);
+}
+.animated-card.is-visible { transform: translateY(0); opacity: 1; }
+.animated-card:focus { outline: none; }
+.animated-card:focus-visible { outline: var(--focus-ring); border-radius: inherit; }
+
+/* Hover effect for animated-card when lift is applied (card--lift class present) */
+.animated-card.card--lift:hover { transform: translateY(-6px); box-shadow: 0 12px 30px rgba(16,24,40,0.08); }
+
+@media (prefers-reduced-motion: reduce) {
+  .animated-card,
+  .card--lift,
+  .motion-fade { transition: none !important; transform: none !important; }
+}
+
+/* Respect user motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .motion-fade,
+  .card--lift,
+  .btn {
+    transition: none !important;
+    transform: none !important;
+  }
+}

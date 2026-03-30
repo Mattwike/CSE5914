@@ -13,7 +13,7 @@ const Header: React.FC<HeaderProps> = ({ title = 'App Name', onLogout, className
     <Container>
       <header className={`site-header ${className}`.trim()}>
         <Heading level={2}>{title}</Heading>
-        {onLogout ? <Button variant="ghost" onClick={onLogout}>Logout</Button> : null}
+        {onLogout ? <Button variant="danger" onClick={onLogout}>Logout</Button> : null}
       </header>
     </Container>
   )
