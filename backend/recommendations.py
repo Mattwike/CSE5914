@@ -1,14 +1,35 @@
 from fastapi import APIRouter, BackgroundTasks
-from openai import OpenAi
+from openai import OpenAI
+from utils.sql_helper import SQLHelper
 import os, json
+from sqlalchemy import create_engine, text
 
+user = os.getenv("DB_USER")
+password = os.getenv("PASSWORD")
+host = os.getenv("HOST")
+port = os.getenv("PORT")
+db_name = os.getenv("DB_NAME")
+
+DATABASE_URL = f"postgresql://{user}:{password}@{host}:{port}/{db_name}?sslmode=require"
+
+engine = create_engine(DATABASE_URL)
+
+db_helper = SQLHelper()
 router = APIRouter(prefix="/recommendations", tags=["recommendations"])
-client = OpenAi(api_key=os.getenv("OPENAI_API_KEY"))
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 @router.get("/get_recommendations")
 async def getRecommendations(userID: str):
     
-    rows = execute_sql("get_recommendation_data.sql", {"userID": userID})
+    query_text = db_helper.load_query("sql_queries/get_recommendation_data.sql")
+    
+    try:
+        with engine.connect() as connection:
+            result = connection.execute(text(query_text), {"userID": userID})
+            rows = [dict(row._mapping) for row in result]
+    except Exception as e:
+        print(f"Database Error: {e}")
+        return []
 
     if not rows:
         return[]
