@@ -12,4 +12,5 @@ dependencies = [
     "pycryptodome>=3.23.0",
     "sqlalchemy>=2.0.47",
     "supabase>=2.27.2",
+    "tzdata>=2025.3",
 ]
