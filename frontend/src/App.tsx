@@ -14,6 +14,8 @@ import Chat from './Screens/Chat'
 import EventDetail from './Screens/EventDetail'
 import GroupDetail from './Screens/GroupDetail'
 import { TopNav } from './components/layout'
+import { AuthProvider } from './context/AuthContext'
+import ProtectedRoute from './components/ProtectedRoute'
 
 function AppRoutes() {
   const location = useLocation()
@@ -28,16 +30,16 @@ function AppRoutes() {
         <Route path="/login" element={<Login />} />
         <Route path="/create-account" element={<CreateAccount />} />
         <Route path="/verify" element={<Verify />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/events" element={<EventsPage />} />
-        <Route path="/events/create" element={<CreateEvent />} />
-        <Route path="/events/:id" element={<EventDetail />} />
-        <Route path="/groups" element={<GroupsPage />} />
-        <Route path="/groups/create" element={<CreateGroup />} />
-        <Route path="/groups/:id" element={<GroupDetail />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/settings" element={<Settings />} />
-        <Route path="/chat" element={<Chat />} />
+        <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+        <Route path="/events" element={<ProtectedRoute><EventsPage /></ProtectedRoute>} />
+        <Route path="/events/create" element={<ProtectedRoute><CreateEvent /></ProtectedRoute>} />
+        <Route path="/events/:id" element={<ProtectedRoute><EventDetail /></ProtectedRoute>} />
+        <Route path="/groups" element={<ProtectedRoute><GroupsPage /></ProtectedRoute>} />
+        <Route path="/groups/create" element={<ProtectedRoute><CreateGroup /></ProtectedRoute>} />
+        <Route path="/groups/:id" element={<ProtectedRoute><GroupDetail /></ProtectedRoute>} />
+        <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+        <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+        <Route path="/chat" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
       </Routes>
     </>
   )
@@ -46,7 +48,9 @@ function AppRoutes() {
 function App() {
   return (
     <BrowserRouter>
-      <AppRoutes />
+      <AuthProvider>
+        <AppRoutes />
+      </AuthProvider>
     </BrowserRouter>
   );
 }

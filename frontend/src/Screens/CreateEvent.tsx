@@ -4,9 +4,6 @@ import { PageWrapper, MainContent } from '../components/layout'
 import { Card, Heading, Input, Button, Text } from '../components/ui'
 import { request } from '../services/api'
 
-// TODO: replace with real authenticated user ID once auth is wired up
-const TEST_USER_ID = 'e2e827a6-8a3d-45f2-a3ba-d53ab24d6164'
-
 const CreateEvent: React.FC = () => {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
@@ -50,7 +47,7 @@ const CreateEvent: React.FC = () => {
       if (closeDate) body.close_date = new Date(closeDate).toISOString()
       if (photo.trim()) body.image_url = photo.trim()
 
-      await request(`/events/${TEST_USER_ID}/create`, {
+      await request('/events/create', {
         method: 'POST',
         body,
       })

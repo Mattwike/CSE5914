@@ -1,8 +1,9 @@
-from fastapi import APIRouter, BackgroundTasks, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from sqlalchemy import create_engine
 from utils.sql_helper import SQLHelper
+from utils.auth_dependency import get_current_user
 from dotenv import load_dotenv
 from typing import Optional
 from datetime import datetime
@@ -32,8 +33,8 @@ class EventCreate(BaseModel):
     capacity: Optional[int] = None
     close_date: Optional[datetime] = None
 
-@router.post("/{user_id}/create")
-async def create(user_id: str, event: EventCreate):
+@router.post("/create")
+async def create(event: EventCreate, current_user: dict = Depends(get_current_user)):
     sql_helper = SQLHelper()
     try:
         query = sql_helper.load_query("sql_queries/create_event.sql")
@@ -53,7 +54,7 @@ async def create(user_id: str, event: EventCreate):
                 'start_time': event.start_time,
                 'end_time': event.end_time,
                 'image_url': event.image_url,
-                'created_by': user_id,
+                'created_by': current_user["user_id"],
                 'capacity': event.capacity,
                 'close_date': event.close_date,
             })
@@ -68,17 +69,21 @@ async def create(user_id: str, event: EventCreate):
     return {"message": "Event created successfully", "event_id": str(row['id'])}
 
 @router.get("/{event_id}")
-async def get_event(event_id: str):
+async def get_event(event_id: str, current_user: dict = Depends(get_current_user)):
     pass
 
 @router.delete("/{event_id}")
-async def delete_event(event_id: str):
+async def delete_event(event_id: str, current_user: dict = Depends(get_current_user)):
     pass
 
 @router.get("/{user_id}/event")
-async def get_user_events(user_id: str):
+async def get_user_events(user_id: str, current_user: dict = Depends(get_current_user)):
     pass
 
 @router.post("/{event_id}/modify")
-async def change_time(eventID: str, userID: str, new_start_time: str, new_end_time: str, new_location: str):
+async def change_time(eventID: str, userID: str, new_start_time: str, new_end_time: str, new_location: str, current_user: dict = Depends(get_current_user)):
+    pass
+
+@router.get("/{user_id}/eventOptions")
+async def get_event_options(user_id: str):
     pass
