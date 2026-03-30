@@ -1,5 +1,6 @@
 from fastapi import APIRouter, BackgroundTasks, Depends
 from utils.auth_dependency import get_current_user
+import os
 
 router = APIRouter(prefix="/events", tags=["events"])
 
@@ -21,4 +22,8 @@ async def get_user_events(user_id: str, current_user: dict = Depends(get_current
 
 @router.post("/{event_id}/modify")
 async def change_time(eventID: str, userID: str, new_start_time: str, new_end_time: str, new_location: str, current_user: dict = Depends(get_current_user)):
+    pass
+
+@router.get("/{user_id}/eventOptions")
+async def get_event_options(user_id: str):
     pass
