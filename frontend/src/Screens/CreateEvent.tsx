@@ -5,7 +5,7 @@ import { Card, Heading, Input, Button, Text } from '../components/ui'
 import { request } from '../services/api'
 
 // TODO: replace with real authenticated user ID once auth is wired up
-const TEST_USER_ID = '078a3566-ad0b-4a12-aa3b-0547af0e4ade'
+const TEST_USER_ID = 'e2e827a6-8a3d-45f2-a3ba-d53ab24d6164'
 
 const CreateEvent: React.FC = () => {
   const [title, setTitle] = useState('')
