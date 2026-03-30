@@ -19,10 +19,10 @@ const sampleGroups = [
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    alert("Logged out!");
-    navigate("/login");
-  };
+  // const handleLogout = () => {
+  //   alert("Logged out!");
+  //   navigate("/login");
+  // };
 
   return (
     <PageWrapper>

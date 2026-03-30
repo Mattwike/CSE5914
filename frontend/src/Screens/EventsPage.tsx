@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { PageWrapper, MainContent } from '../components/layout'
 import { EventGrid, EventFilters, EventHero } from '../components/events'
-import { Input, Button, Heading } from '../components/ui'
+import { Button, Heading } from '../components/ui'
 import '../styles/events.css'
 
 type EventItem = {
