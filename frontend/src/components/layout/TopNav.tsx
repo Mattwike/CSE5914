@@ -1,12 +1,11 @@
 import React from 'react'
-import { NavLink, useNavigate, useLocation } from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router-dom'
 import { Container, Button, LazyImage } from '../ui'
 import { useAuthContext } from '../../context/AuthContext'
 import '../../styles/layout.css'
 
 const TopNav: React.FC = () => {
   const navigate = useNavigate()
-  const { pathname } = useLocation()
   const { isAuthenticated, logout } = useAuthContext()
   const disabled = !isAuthenticated
 
