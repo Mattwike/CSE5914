@@ -1,8 +1,10 @@
-from fastapi import APIRouter, BackgroundTasks
+from fastapi import APIRouter, BackgroundTasks, Depends
 from fastapi_mail import FastMail, MessageSchema, ConnectionConfig, MessageType
 from fastapi import HTTPException, status
 from fastapi.responses import JSONResponse
 from utils.crypto import CryptoManager
+from utils.jwt_helper import create_token
+from utils.auth_dependency import get_current_user
 from supabase import create_client, Client
 from dotenv import load_dotenv
 from pydantic import BaseModel
@@ -219,7 +221,19 @@ async def login(data: Data):
             content={"message": "Account not verified please check your email"}
         )
     else:
-        return {"message": "Login successful!"}
+        token = create_token(user_id=str(user['id']), email=user['email'])
+        return {
+            "token": token,
+            "user": {
+                "user_id": str(user['id']),
+                "email": user['email'],
+            },
+        }
+
+
+@router.get("/me")
+async def get_me(current_user: dict = Depends(get_current_user)):
+    return {"user_id": current_user["user_id"], "email": current_user["email"]}
 
 @router.post("/debug")
 async def debug(data: Data):

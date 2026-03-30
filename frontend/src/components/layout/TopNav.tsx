@@ -1,16 +1,22 @@
 import React from 'react'
 import { NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { Container, Button, LazyImage } from '../ui'
+import { useAuthContext } from '../../context/AuthContext'
 import '../../styles/layout.css'
 
 const TopNav: React.FC = () => {
   const navigate = useNavigate()
   const { pathname } = useLocation()
-  const isLanding = pathname === '/'
+  const { isAuthenticated, logout } = useAuthContext()
+  const disabled = !isAuthenticated
 
   const handleAuthClick = () => {
-    if (isLanding) navigate('/login')
-    else navigate('/')
+    if (!isAuthenticated) {
+      navigate('/login')
+    } else {
+      logout()
+      navigate('/')
+    }
   }
 
   return (
@@ -28,51 +34,51 @@ const TopNav: React.FC = () => {
               <li>
                 <NavLink
                   to="/dashboard"
-                  onClick={(e) => { if (isLanding) e.preventDefault() }}
-                  className={({isActive}) => `${isActive ? 'active' : ''} ${isLanding ? 'disabled' : ''}`.trim()}
+                  onClick={(e) => { if (disabled) e.preventDefault() }}
+                  className={({isActive}) => `${isActive ? 'active' : ''} ${disabled ? 'disabled' : ''}`.trim()}
                 >Home</NavLink>
               </li>
               <li>
                 <NavLink
                   to="/events"
-                  onClick={(e) => { if (isLanding) e.preventDefault() }}
-                  className={({isActive}) => `${isActive ? 'active' : ''} ${isLanding ? 'disabled' : ''}`.trim()}
+                  onClick={(e) => { if (disabled) e.preventDefault() }}
+                  className={({isActive}) => `${isActive ? 'active' : ''} ${disabled ? 'disabled' : ''}`.trim()}
                 >Events</NavLink>
               </li>
               <li>
                 <NavLink
                   to="/groups"
-                  onClick={(e) => { if (isLanding) e.preventDefault() }}
-                  className={({isActive}) => `${isActive ? 'active' : ''} ${isLanding ? 'disabled' : ''}`.trim()}
+                  onClick={(e) => { if (disabled) e.preventDefault() }}
+                  className={({isActive}) => `${isActive ? 'active' : ''} ${disabled ? 'disabled' : ''}`.trim()}
                 >Groups</NavLink>
               </li>
               <li>
                 <NavLink
                   to="/chat"
-                  onClick={(e) => { if (isLanding) e.preventDefault() }}
-                  className={({isActive}) => `${isActive ? 'active' : ''} ${isLanding ? 'disabled' : ''}`.trim()}
+                  onClick={(e) => { if (disabled) e.preventDefault() }}
+                  className={({isActive}) => `${isActive ? 'active' : ''} ${disabled ? 'disabled' : ''}`.trim()}
                 >Chat</NavLink>
               </li>
               <li>
                 <NavLink
                   to="/profile"
-                  onClick={(e) => { if (isLanding) e.preventDefault() }}
-                  className={({isActive}) => `${isActive ? 'active' : ''} ${isLanding ? 'disabled' : ''}`.trim()}
+                  onClick={(e) => { if (disabled) e.preventDefault() }}
+                  className={({isActive}) => `${isActive ? 'active' : ''} ${disabled ? 'disabled' : ''}`.trim()}
                 >Profile</NavLink>
               </li>
               <li>
                 <NavLink
                   to="/settings"
-                  onClick={(e) => { if (isLanding) e.preventDefault() }}
-                  className={({isActive}) => `${isActive ? 'active' : ''} ${isLanding ? 'disabled' : ''}`.trim()}
+                  onClick={(e) => { if (disabled) e.preventDefault() }}
+                  className={({isActive}) => `${isActive ? 'active' : ''} ${disabled ? 'disabled' : ''}`.trim()}
                 >Settings</NavLink>
               </li>
             </ul>
           </div>
 
           <div className="topnav-right">
-            <Button variant={isLanding ? 'primary' : 'danger'} onClick={handleAuthClick}>
-              {isLanding ? 'Sign in' : 'Sign out'}
+            <Button variant={isAuthenticated ? 'danger' : 'primary'} onClick={handleAuthClick}>
+              {isAuthenticated ? 'Sign out' : 'Sign in'}
             </Button>
           </div>
         </nav>

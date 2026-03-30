@@ -9,6 +9,11 @@ export async function request(path: string, opts: RequestOptions = {}) {
     headers['Content-Type'] = headers['Content-Type'] || 'application/json'
   }
 
+  const token = localStorage.getItem('token')
+  if (token && !headers['Authorization']) {
+    headers['Authorization'] = `Bearer ${token}`
+  }
+
   const res = await fetch(url, {
     ...opts,
     headers,
@@ -20,6 +25,10 @@ export async function request(path: string, opts: RequestOptions = {}) {
   try { data = text ? JSON.parse(text) : undefined } catch (e) { data = text }
 
   if (!res.ok) {
+    if (res.status === 401) {
+      localStorage.removeItem('token')
+      window.location.href = '/login'
+    }
     const message = data && data.message ? data.message : res.statusText
     const err: any = new Error(message)
     err.status = res.status
