@@ -16,7 +16,6 @@ import GroupDetail from './Screens/GroupDetail'
 import { TopNav } from './components/layout'
 import { AuthProvider } from './context/AuthContext'
 import ProtectedRoute from './components/ProtectedRoute'
-import AuthDebugBanner from './components/AuthDebugBanner'
 
 function AppRoutes() {
   const location = useLocation()
@@ -51,7 +50,6 @@ function App() {
     <BrowserRouter>
       <AuthProvider>
         <AppRoutes />
-        <AuthDebugBanner />
       </AuthProvider>
     </BrowserRouter>
   );

@@ -25,22 +25,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const storedToken = localStorage.getItem('token')
     if (!storedToken) {
-      console.log('[Auth] No stored token found')
       setIsLoading(false)
       return
     }
 
-    console.log('[Auth] Found stored token, validating...')
     request('/account/me', {
       headers: { Authorization: `Bearer ${storedToken}` },
     })
       .then((data: User) => {
-        console.log('[Auth] Token valid, user:', data.email)
         setToken(storedToken)
         setUser(data)
       })
       .catch((err) => {
-        console.warn('[Auth] Token validation failed:', err?.message)
         localStorage.removeItem('token')
       })
       .finally(() => {
@@ -49,14 +45,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   function login(newToken: string, newUser: User) {
-    console.log('[Auth] Login:', newUser.email)
     localStorage.setItem('token', newToken)
     setToken(newToken)
     setUser(newUser)
   }
 
   function logout() {
-    console.log('[Auth] Logout')
     localStorage.removeItem('token')
     setToken(null)
     setUser(null)
