@@ -70,7 +70,40 @@ async def create(event: EventCreate, current_user: dict = Depends(get_current_us
 
 @router.get("/{event_id}")
 async def get_event(event_id: str, current_user: dict = Depends(get_current_user)):
-    pass
+    sql_helper = SQLHelper()
+    try:
+        query = sql_helper.load_query("sql_queries/select_event_by_id.sql")
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to load query")
+
+    try:
+        with engine.connect() as connection:
+            result = connection.execute(query, { 'id': event_id })
+            row = result.mappings().fetchone()
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database error: {str(e)}")
+
+    if not row:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Event not found")
+
+    # Map DB row to frontend shape
+    start_time = row.get('start_time')
+    date_val = start_time.isoformat() if start_time is not None else None
+    loc_name = row.get('location_name')
+    loc_addr = row.get('location_address')
+    if loc_name and loc_addr:
+        location = f"{loc_name}, {loc_addr}"
+    else:
+        location = loc_name or loc_addr or None
+
+    return {
+        'id': str(row.get('id')),
+        'title': row.get('title'),
+        'date': date_val,
+        'location': location,
+        'description': row.get('description'),
+        'thumbnail': row.get('image_url'),
+    }
 
 @router.delete("/{event_id}")
 async def delete_event(event_id: str, current_user: dict = Depends(get_current_user)):
@@ -78,7 +111,83 @@ async def delete_event(event_id: str, current_user: dict = Depends(get_current_u
 
 @router.get("/{user_id}/event")
 async def get_user_events(user_id: str, current_user: dict = Depends(get_current_user)):
-    pass
+    # Return events created by the given user (from `events` table)
+    sql_helper = SQLHelper()
+    try:
+        query = sql_helper.load_query("sql_queries/select_events.sql")
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to load query")
+
+    try:
+        with engine.connect() as connection:
+            result = connection.execute(query)
+            rows = result.mappings().fetchall()
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database error: {str(e)}")
+
+    items = []
+    for r in rows:
+        start_time = r.get('start_time')
+        date_val = start_time.isoformat() if start_time is not None else None
+        loc_name = r.get('location_name')
+        loc_addr = r.get('location_address')
+        if loc_name and loc_addr:
+            location = f"{loc_name}, {loc_addr}"
+        else:
+            location = loc_name or loc_addr or None
+
+        items.append({
+            'id': str(r.get('id')),
+            'title': r.get('title'),
+            'date': date_val,
+            'location': location,
+            'description': r.get('description'),
+            'thumbnail': r.get('image_url'),
+        })
+
+    return items
+
+
+@router.get("/")
+async def list_events():
+    """List combined events from external `event_options` and user `events`.
+    Returns a list of mapped objects matching frontend `EventItem` shape.
+    """
+    sql_helper = SQLHelper()
+    try:
+        q1 = sql_helper.load_query("sql_queries/select_event_options.sql")
+        q2 = sql_helper.load_query("sql_queries/select_events.sql")
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to load queries")
+
+    try:
+        with engine.connect() as connection:
+            r1 = connection.execute(q1).mappings().fetchall()
+            r2 = connection.execute(q2).mappings().fetchall()
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database error: {str(e)}")
+
+    items = []
+    for r in list(r1) + list(r2):
+        start_time = r.get('start_time')
+        date_val = start_time.isoformat() if start_time is not None else None
+        loc_name = r.get('location_name')
+        loc_addr = r.get('location_address')
+        if loc_name and loc_addr:
+            location = f"{loc_name}, {loc_addr}"
+        else:
+            location = loc_name or loc_addr or None
+
+        items.append({
+            'id': str(r.get('id')),
+            'title': r.get('title'),
+            'date': date_val,
+            'location': location,
+            'description': r.get('description'),
+            'thumbnail': r.get('image_url'),
+        })
+
+    return items
 
 @router.post("/{event_id}/modify")
 async def change_time(eventID: str, userID: str, new_start_time: str, new_end_time: str, new_location: str, current_user: dict = Depends(get_current_user)):
