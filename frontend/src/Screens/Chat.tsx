@@ -25,16 +25,6 @@ const Chat: React.FC = () => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: 'smooth' })
   }, [messages])
 
-  const preparePayload = (userText: string) => {
-    // Prepare the payload to send to backend LLM service.
-    // Replace this with an actual fetch call when backend is available.
-    return {
-      input: userText,
-      context: selectedEvent ? { eventId: selectedEvent } : undefined,
-      history: messages.map((m) => ({ role: m.role, text: m.text })),
-    }
-  }
-
   const sendMessage = async () => {
     if (!input.trim()) return
     const userMsg: Message = { id: String(Date.now()), role: 'user', text: input }
