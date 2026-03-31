@@ -2,15 +2,7 @@ import React from 'react'
 import { AnimatedCard, Heading, Text, Button } from '../ui'
 import LazyImage from '../ui/LazyImage'
 import '../../styles/events.css'
-
-export type EventItem = {
-  id: string
-  title: string
-  date: string
-  location?: string
-  description?: string
-  thumbnail?: string
-}
+import type { EventItem } from '../../services/events'
 
 type Props = {
   event: EventItem
@@ -20,7 +12,7 @@ type Props = {
 
 const EventCard: React.FC<Props> = ({ event, onView, className = '' }) => {
   const { id, title, date, location, description, thumbnail } = event
-  const displayDate = new Date(date).toLocaleString()
+  const displayDate = date ? new Date(date).toLocaleString() : 'TBA'
   const thumb = thumbnail || '/block.jpg'
   const thumbSrcSet = `${thumb} 640w, ${thumb} 320w`
   const thumbSizes = '(max-width: 420px) 100vw, 320px'

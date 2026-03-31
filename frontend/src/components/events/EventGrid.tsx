@@ -1,6 +1,6 @@
 import React from 'react'
 import EventCard from './EventCard'
-import type { EventItem } from './EventCard'
+import type { EventItem } from '../../services/events'
 import EventSkeleton from './EventSkeleton'
 import '../../styles/events.css'
 

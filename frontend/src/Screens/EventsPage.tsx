@@ -5,13 +5,7 @@ import { EventGrid, EventFilters, EventHero } from '../components/events'
 import { Button, Heading } from '../components/ui'
 import '../styles/events.css'
 import useEvents from '../hooks/useEvents'
-type EventItem = {
-  id: string
-  title: string
-  date: string
-  location?: string
-  description?: string
-}
+import type { EventItem } from '../services/events'
 
 const PAGE_SIZE = 10
 

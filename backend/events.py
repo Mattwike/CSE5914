@@ -22,6 +22,18 @@ engine = create_engine(database_url, pool_pre_ping=True)
 
 router = APIRouter(prefix="/events", tags=["events"])
 
+
+def _iso_str(val):
+    if val is None:
+        return None
+    # if it's already a string, return as-is
+    if isinstance(val, str):
+        return val
+    try:
+        return val.isoformat()
+    except Exception:
+        return str(val)
+
 class EventCreate(BaseModel):
     title: str
     description: Optional[str] = None
@@ -69,7 +81,7 @@ async def create(event: EventCreate, current_user: dict = Depends(get_current_us
     return {"message": "Event created successfully", "event_id": str(row['id'])}
 
 @router.get("/{event_id}")
-async def get_event(event_id: str, current_user: dict = Depends(get_current_user)):
+async def get_event(event_id: str):
     sql_helper = SQLHelper()
     try:
         query = sql_helper.load_query("sql_queries/select_event_by_id.sql")
@@ -88,7 +100,7 @@ async def get_event(event_id: str, current_user: dict = Depends(get_current_user
 
     # Map DB row to frontend shape
     start_time = row.get('start_time')
-    date_val = start_time.isoformat() if start_time is not None else None
+    date_val = _iso_str(start_time)
     loc_name = row.get('location_name')
     loc_addr = row.get('location_address')
     if loc_name and loc_addr:
@@ -128,7 +140,7 @@ async def get_user_events(user_id: str, current_user: dict = Depends(get_current
     items = []
     for r in rows:
         start_time = r.get('start_time')
-        date_val = start_time.isoformat() if start_time is not None else None
+        date_val = _iso_str(start_time)
         loc_name = r.get('location_name')
         loc_addr = r.get('location_address')
         if loc_name and loc_addr:
@@ -171,7 +183,7 @@ async def list_events():
     items = []
     for r in list(r1) + list(r2):
         start_time = r.get('start_time')
-        date_val = start_time.isoformat() if start_time is not None else None
+        date_val = _iso_str(start_time)
         loc_name = r.get('location_name')
         loc_addr = r.get('location_address')
         if loc_name and loc_addr:

@@ -1,6 +1,6 @@
 export { default as EventCard } from './EventCard'
 export { default as EventGrid } from './EventGrid'
-export type { EventItem } from './EventCard'
+export type { EventItem } from '../../services/events'
 export { default as EventHero } from './EventHero'
 export { default as EventFilters } from './EventFilters'
 export { default as EventListItem } from './EventListItem'
