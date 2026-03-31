@@ -99,7 +99,6 @@ const Chat: React.FC = () => {
                     <Button onClick={sendMessage} disabled={loading || !input.trim()}>{loading ? 'Sending…' : 'Send'}</Button>
                   </div>
                 </div>
-                <div className="chat-note"><Text as="span">Responses are simulated locally until backend is connected.</Text></div>
               </div>
             </div>
 
