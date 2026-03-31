@@ -17,6 +17,14 @@ class Data(BaseModel):
     email: str
     password: str
 
+class ProfileUpdate(BaseModel):
+    id: str
+    display_name: str
+    graduation_year: int | None = None
+    major: str
+    has_car: bool
+    bio: str
+
 class Envs:
     MAIL_USERNAME = os.getenv('MAIL_USERNAME')
     MAIL_PASSWORD = os.getenv('MAIL_PASSWORD')
@@ -219,7 +227,67 @@ async def login(data: Data):
             content={"message": "Account not verified please check your email"}
         )
     else:
-        return {"message": "Login successful!"}
+        return {
+            "message": "Login successful!",
+            "id": str(user["id"]),
+            "email": user["email"]
+        }
+
+@router.get("/profile")
+async def get_profile(id: str):
+    sql_helper = SQLHelper()
+
+    try:
+        query = sql_helper.load_query("sql_queries/get_user_profile.sql")
+        with engine.connect() as connection:
+            result = connection.execute(query, {
+                'id': id,
+            })
+            user = result.mappings().fetchone()
+    except Exception:
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={"message": "Database Error"}
+        )
+
+    if user is None:
+        return JSONResponse(
+            status_code=status.HTTP_404_NOT_FOUND,
+            content={"message": "Profile not found"}
+        )
+
+    return dict(user)
+
+@router.put("/profile")
+async def update_profile(profile: ProfileUpdate):
+    sql_helper = SQLHelper()
+
+    try:
+        query = sql_helper.load_query("sql_queries/update_user_profile.sql")
+        with engine.connect() as connection:
+            result = connection.execute(query, {
+                'id': profile.id,
+                'display_name': profile.display_name,
+                'graduation_year': profile.graduation_year,
+                'major': profile.major,
+                'has_car': profile.has_car,
+                'bio': profile.bio,
+            })
+            updated_user = result.mappings().fetchone()
+            connection.commit()
+    except Exception:
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={"message": "Database Error"}
+        )
+
+    if updated_user is None:
+        return JSONResponse(
+            status_code=status.HTTP_404_NOT_FOUND,
+            content={"message": "Profile not found"}
+        )
+
+    return dict(updated_user)
 
 @router.post("/debug")
 async def debug(data: Data):

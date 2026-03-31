@@ -15,7 +15,9 @@ function Login() {
 
   const handleLogin = async () => {
     try {
-      await login(email, password)
+      const res = await login(email, password)
+      localStorage.setItem('userId', res.id)
+      localStorage.setItem('userEmail', res.email)
       alert("Login Successful!")
       navigate("/dashboard")
     } catch (err: any) {

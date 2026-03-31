@@ -1,9 +1,32 @@
 import { request } from './api'
 
-export interface LoginResponse { message: string }
+export interface LoginResponse {
+  message: string
+  id: string
+  email: string
+}
+export interface ProfileResponse {
+  id: string
+  email: string
+  verified: boolean
+  display_name: string | null
+  graduation_year: number | null
+  major: string | null
+  has_car: boolean | null
+  bio: string | null
+}
+
+export interface UpdateProfileRequest {
+  id: string
+  display_name: string
+  graduation_year: number | null
+  major: string
+  has_car: boolean
+  bio: string
+}
 
 export async function login(email: string, password: string) {
-  return request('/account/login', { method: 'POST', body: { email, password } })
+  return request('/account/login', { method: 'POST', body: { email, password } }) as Promise<LoginResponse>
 }
 
 export async function register(email: string, password: string) {
@@ -18,3 +41,10 @@ export async function verifyToken(token: string, user_email: string) {
   return request(`/account/verify_token?token=${encodeURIComponent(token)}&user_email=${encodeURIComponent(user_email)}`)
 }
 
+export async function getProfile(id: string) {
+  return request(`/account/profile?id=${encodeURIComponent(id)}`) as Promise<ProfileResponse>
+}
+
+export async function updateProfile(profile: UpdateProfileRequest) {
+  return request('/account/profile', { method: 'PUT', body: profile }) as Promise<ProfileResponse>
+}
