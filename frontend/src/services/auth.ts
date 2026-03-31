@@ -10,6 +10,7 @@ export interface ProfileResponse {
   email: string
   verified: boolean
   display_name: string | null
+  birth_date: string | null
   graduation_year: number | null
   major: string | null
   has_car: boolean | null
@@ -19,6 +20,7 @@ export interface ProfileResponse {
 export interface UpdateProfileRequest {
   id: string
   display_name: string
+  birth_date: string | null
   graduation_year: number | null
   major: string
   has_car: boolean

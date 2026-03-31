@@ -3,6 +3,7 @@ SELECT
   email,
   verified,
   display_name,
+  birth_date,
   graduation_year,
   major,
   has_car,

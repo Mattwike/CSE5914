@@ -20,6 +20,7 @@ class Data(BaseModel):
 class ProfileUpdate(BaseModel):
     id: str
     display_name: str
+    birth_date: str | None = None
     graduation_year: int | None = None
     major: str
     has_car: bool
@@ -268,6 +269,7 @@ async def update_profile(profile: ProfileUpdate):
             result = connection.execute(query, {
                 'id': profile.id,
                 'display_name': profile.display_name,
+                'birth_date': profile.birth_date,
                 'graduation_year': profile.graduation_year,
                 'major': profile.major,
                 'has_car': profile.has_car,

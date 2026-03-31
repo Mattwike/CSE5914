@@ -15,6 +15,7 @@ const Profile: React.FC = () => {
   const [userId, setUserId] = useState('')
   const [isVerified, setIsVerified] = useState(false)
   const [displayName, setDisplayName] = useState('')
+  const [birthDate, setBirthDate] = useState('')
   const [graduationYear, setGraduationYear] = useState('')
   const [major, setMajor] = useState('')
   const [hasCar, setHasCar] = useState(true)
@@ -46,6 +47,7 @@ const Profile: React.FC = () => {
         setEmail(profile.email ?? '')
         setIsVerified(Boolean(profile.verified))
         setDisplayName(profile.display_name ?? '')
+        setBirthDate(profile.birth_date ?? '')
         setGraduationYear(profile.graduation_year != null ? String(profile.graduation_year) : '')
         setMajor(profile.major ?? '')
         setHasCar(Boolean(profile.has_car))
@@ -89,6 +91,7 @@ const Profile: React.FC = () => {
       const updatedProfile = await updateProfile({
         id: userId,
         display_name: displayName,
+        birth_date: birthDate || null,
         graduation_year: graduationYear ? Number(graduationYear) : null,
         major,
         has_car: hasCar,
@@ -99,6 +102,7 @@ const Profile: React.FC = () => {
       setEmail(updatedProfile.email ?? '')
       setIsVerified(Boolean(updatedProfile.verified))
       setDisplayName(updatedProfile.display_name ?? '')
+      setBirthDate(updatedProfile.birth_date ?? '')
       setGraduationYear(updatedProfile.graduation_year != null ? String(updatedProfile.graduation_year) : '')
       setMajor(updatedProfile.major ?? '')
       setHasCar(Boolean(updatedProfile.has_car))
@@ -145,13 +149,71 @@ const Profile: React.FC = () => {
             <div className="profile-divider" />
 
             <div className="profile-block">
-              <Text as="p" className="profile-block-title">Academic</Text>
+              <Text as="p" className="profile-block-title">Basic</Text>
               <div className="profile-grid">
                 <Input
                   label="Display Name"
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
                   placeholder="Enter your display name"
+                />
+
+                <div>
+                  <label className="input-label" htmlFor="birth-date">Birth Date</label>
+                  <input
+                    id="birth-date"
+                    type="date"
+                    className="input"
+                    value={birthDate}
+                    onChange={(e) => setBirthDate(e.target.value)}
+                  />
+                </div>
+
+                <div>
+                  <label className="input-label" htmlFor="has-car-trigger">Has Car</label>
+                  <div className="profile-dropdown" onClick={(e) => e.stopPropagation()}>
+                    <button
+                      id="has-car-trigger"
+                      type="button"
+                      className="profile-dropdown-trigger"
+                      aria-haspopup="listbox"
+                      aria-expanded={openMenu === 'hasCar'}
+                      onClick={() => setOpenMenu((current) => current === 'hasCar' ? null : 'hasCar')}
+                    >
+                      {hasCar ? 'Yes' : 'No'}
+                    </button>
+                    {openMenu === 'hasCar' ? (
+                      <div className="profile-dropdown-menu" role="listbox" aria-labelledby="has-car-trigger">
+                        {hasCarOptions.map((option) => (
+                          <button
+                            key={option.label}
+                            type="button"
+                            className={hasCar === option.value ? 'profile-dropdown-option profile-dropdown-option--active' : 'profile-dropdown-option'}
+                            onClick={() => {
+                              setHasCar(option.value)
+                              setOpenMenu(null)
+                            }}
+                          >
+                            {option.label}
+                          </button>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="profile-divider" />
+
+            <div className="profile-block">
+              <Text as="p" className="profile-block-title">Academic</Text>
+              <div className="profile-grid">
+                <Input
+                  label="Major"
+                  value={major}
+                  onChange={(e) => setMajor(e.target.value)}
+                  placeholder="Enter your major"
                 />
 
                 <div>
@@ -188,46 +250,6 @@ const Profile: React.FC = () => {
                     ) : null}
                   </div>
                   <Text as="p" className="profile-helper">Expected year you finish your degree.</Text>
-                </div>
-
-                <Input
-                  label="Major"
-                  value={major}
-                  onChange={(e) => setMajor(e.target.value)}
-                  placeholder="Enter your major"
-                />
-
-                <div>
-                  <label className="input-label" htmlFor="has-car-trigger">Has Car</label>
-                  <div className="profile-dropdown" onClick={(e) => e.stopPropagation()}>
-                    <button
-                      id="has-car-trigger"
-                      type="button"
-                      className="profile-dropdown-trigger"
-                      aria-haspopup="listbox"
-                      aria-expanded={openMenu === 'hasCar'}
-                      onClick={() => setOpenMenu((current) => current === 'hasCar' ? null : 'hasCar')}
-                    >
-                      {hasCar ? 'Yes' : 'No'}
-                    </button>
-                    {openMenu === 'hasCar' ? (
-                      <div className="profile-dropdown-menu" role="listbox" aria-labelledby="has-car-trigger">
-                        {hasCarOptions.map((option) => (
-                          <button
-                            key={option.label}
-                            type="button"
-                            className={hasCar === option.value ? 'profile-dropdown-option profile-dropdown-option--active' : 'profile-dropdown-option'}
-                            onClick={() => {
-                              setHasCar(option.value)
-                              setOpenMenu(null)
-                            }}
-                          >
-                            {option.label}
-                          </button>
-                        ))}
-                      </div>
-                    ) : null}
-                  </div>
                 </div>
               </div>
             </div>
