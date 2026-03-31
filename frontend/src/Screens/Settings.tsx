@@ -1,18 +1,45 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { PageWrapper, MainContent } from '../components/layout'
 import { Button, Card, Heading, Text } from '../components/ui'
+import { getCategories } from '../services/events'
 
 const Settings: React.FC = () => {
   const [preferenceMessage, setPreferenceMessage] = useState('')
   const [interests, setInterests] = useState<string[]>(['Social', 'Career'])
+  const [interestOptions, setInterestOptions] = useState<string[]>([])
   const [eventSize, setEventSize] = useState('Medium')
   const [preferredTime, setPreferredTime] = useState('Evening')
   const [eventVibe, setEventVibe] = useState('Meet people')
   const [formatPreference, setFormatPreference] = useState('Either')
   const [travelDistance, setTravelDistance] = useState('Anywhere on campus')
   const [recommendationFrequency, setRecommendationFrequency] = useState('Weekly')
+  const [loadingCategories, setLoadingCategories] = useState(true)
+  const [categoryError, setCategoryError] = useState('')
 
-  const interestOptions = ['Social', 'Academic', 'Career', 'Fitness', 'Arts', 'Volunteering']
+  useEffect(() => {
+    let isMounted = true
+
+    async function loadCategories() {
+      try {
+        const data = await getCategories()
+        if (!isMounted) return
+        setInterestOptions(data.categories)
+        setInterests((current) => current.filter((item) => data.categories.includes(item)))
+        setCategoryError('')
+      } catch (err: any) {
+        if (!isMounted) return
+        setCategoryError(err?.message || 'Unable to load categories.')
+      } finally {
+        if (isMounted) setLoadingCategories(false)
+      }
+    }
+
+    loadCategories()
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
 
   const toggleInterest = (interest: string) => {
     setInterests((current) =>
@@ -43,6 +70,8 @@ const Settings: React.FC = () => {
               <div>
                 <Text as="p" className="mb-1">What kinds of events interest you most?</Text>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px' }}>
+                  {loadingCategories ? <Text as="p">Loading categories...</Text> : null}
+                  {categoryError ? <Text as="p" className="error-text">{categoryError}</Text> : null}
                   {interestOptions.map((interest) => (
                     <label key={interest} className="card" style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px' }}>
                       <input

@@ -1,11 +1,19 @@
 import { request } from './api'
 
+export interface CategoriesResponse {
+  categories: string[]
+}
+
 export type EventItem = {
   id: string
   title: string
   date: string
   location?: string
   description?: string
+}
+
+export async function getCategories() {
+  return request('/events/categories') as Promise<CategoriesResponse>
 }
 
 export async function getEvents(userId?: string) {
