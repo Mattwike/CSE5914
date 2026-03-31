@@ -4,7 +4,7 @@ import { PageWrapper, MainContent } from '../components/layout'
 import { EventGrid, EventFilters, EventHero } from '../components/events'
 import { Button, Heading } from '../components/ui'
 import '../styles/events.css'
-
+import useEvents from '../hooks/useEvents'
 type EventItem = {
   id: string
   title: string
@@ -13,32 +13,23 @@ type EventItem = {
   description?: string
 }
 
-// Mock data: 25 items to demo pagination
-const MOCK_EVENTS: EventItem[] = Array.from({ length: 25 }).map((_, i) => ({
-  id: String(i + 1),
-  title: `Event #${i + 1}`,
-  date: new Date(Date.now() + i * 86400000).toISOString(),
-  location: i % 3 === 0 ? 'Auditorium' : i % 3 === 1 ? 'Room 101' : 'Online',
-  description: `This is a short description for event ${i + 1}.`,
-}))
-
 const PAGE_SIZE = 10
 
 const EventsPage: React.FC = () => {
   const [search, setSearch] = useState('')
   const [location, setLocation] = useState('')
   const [page, setPage] = useState(1)
-  const [loading, setLoading] = useState(false)
+  const { events, loading, error } = useEvents()
 
   // Filter logic lives in page (not in EventGrid)
   const filtered = useMemo(() => {
     const s = search.trim().toLowerCase()
-    return MOCK_EVENTS.filter((e) => {
-      if (s && !e.title.toLowerCase().includes(s)) return false
+    return (events || []).filter((e) => {
+      if (s && !String(e.title).toLowerCase().includes(s)) return false
       if (location && e.location !== location) return false
       return true
     })
-  }, [search, location])
+  }, [search, location, events])
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
 
@@ -47,14 +38,7 @@ const EventsPage: React.FC = () => {
     return filtered.slice(start, start + PAGE_SIZE)
   }, [filtered, page])
 
-  // simulate a short loading delay whenever filters/page change
-  React.useEffect(() => {
-    setLoading(true)
-    const t = setTimeout(() => setLoading(false), 400)
-    return () => clearTimeout(t)
-  }, [search, location, page])
-
-  const locations = useMemo(() => Array.from(new Set(MOCK_EVENTS.map((e) => e.location).filter(Boolean) as string[])), [])
+  const locations = useMemo(() => Array.from(new Set((events || []).map((e) => e.location).filter(Boolean) as string[])), [events])
 
   const navigate = useNavigate()
 

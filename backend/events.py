@@ -148,6 +148,7 @@ async def get_user_events(user_id: str, current_user: dict = Depends(get_current
     return items
 
 
+@router.get("")
 @router.get("/")
 async def list_events():
     """List combined events from external `event_options` and user `events`.
