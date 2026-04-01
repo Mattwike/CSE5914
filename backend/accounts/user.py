@@ -254,6 +254,63 @@ async def debug(data: Data):
     return {"message": "Debug complete. User data deleted."}
     
 
+@router.get("/profile")
+async def get_profile(id: str):
+    sql_helper = SQLHelper()
+
+    try:
+        query = sql_helper.load_query("sql_queries/get_user_profile.sql")
+        with engine.connect() as connection:
+            result = connection.execute(query, {
+                'id': id,
+            })
+            user = result.mappings().fetchone()
+    except Exception:
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={"message": "Database Error"}
+        )
+
+    if user is None:
+        return JSONResponse(
+            status_code=status.HTTP_404_NOT_FOUND,
+            content={"message": "Profile not found"}
+        )
+
+    return dict(user)
+
+@router.put("/profile")
+async def update_profile(profile: ProfileUpdate):
+    sql_helper = SQLHelper()
+
+    try:
+        query = sql_helper.load_query("sql_queries/update_user_profile.sql")
+        with engine.connect() as connection:
+            result = connection.execute(query, {
+                'id': profile.id,
+                'display_name': profile.display_name,
+                'birth_date': profile.birth_date,
+                'graduation_year': profile.graduation_year,
+                'major': profile.major,
+                'has_car': profile.has_car,
+                'bio': profile.bio,
+            })
+            updated_user = result.mappings().fetchone()
+            connection.commit()
+    except Exception:
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={"message": "Database Error"}
+        )
+
+    if updated_user is None:
+        return JSONResponse(
+            status_code=status.HTTP_404_NOT_FOUND,
+            content={"message": "Profile not found"}
+        )
+
+    return dict(updated_user)
+
 @router.delete("/delete_account")
 async def deleteAccount(data: Data, background_tasks: BackgroundTasks):
     pass
