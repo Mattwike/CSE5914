@@ -77,8 +77,11 @@ const GroupDetail: React.FC = () => {
     }
   }
 
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+
   const handleDelete = async () => {
-    if (!id || !confirm('Are you sure you want to delete this group? This cannot be undone.')) return
+    if (!id) return
+    setShowDeleteConfirm(false)
     setActionLoading(true)
     try {
       await groupsService.deleteGroup(id)
@@ -142,12 +145,22 @@ const GroupDetail: React.FC = () => {
                   </Button>
                 )}
 
-                {isOwner && (
-                  <Button variant="danger" onClick={handleDelete} disabled={actionLoading}>
+                {isOwner && !showDeleteConfirm && (
+                  <Button variant="danger" onClick={() => setShowDeleteConfirm(true)} disabled={actionLoading}>
                     Delete Group
                   </Button>
                 )}
               </div>
+
+              {showDeleteConfirm && (
+                <div className="card" style={{ padding: 'var(--space-md)', marginTop: 'var(--space-sm)', display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
+                  <Text as="span">Are you sure? This cannot be undone.</Text>
+                  <Button variant="danger" onClick={handleDelete} disabled={actionLoading}>
+                    {actionLoading ? 'Deleting...' : 'Yes, delete'}
+                  </Button>
+                  <Button variant="ghost" onClick={() => setShowDeleteConfirm(false)}>Cancel</Button>
+                </div>
+              )}
 
               {actionMessage && (
                 <Text as="p" className="status-active" style={{ marginTop: 'var(--space-sm)' }}>{actionMessage}</Text>
