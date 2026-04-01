@@ -17,10 +17,10 @@ const GroupFilters: React.FC<Props> = ({ search, setSearch, location, setLocatio
         <Input id="group-search" placeholder="Search groups" value={search} onChange={(e) => setSearch(e.target.value)} aria-label="Search groups" />
       </div>
       <div>
-        <label className="visually-hidden" htmlFor="group-location">Location</label>
-        <select id="group-location" className="input" value={location} onChange={(e) => setLocation(e.target.value)} aria-label="Filter groups by location">
-          <option value="">All locations</option>
-          {locations.map((l) => <option key={l} value={l}>{l}</option>)}
+        <label className="visually-hidden" htmlFor="group-location">Join policy</label>
+        <select id="group-location" className="input" value={location} onChange={(e) => setLocation(e.target.value)} aria-label="Filter groups by join policy">
+          <option value="">All groups</option>
+          {locations.map((l) => <option key={l} value={l}>{l === 'open' ? 'Open' : 'Approval required'}</option>)}
         </select>
       </div>
     </form>

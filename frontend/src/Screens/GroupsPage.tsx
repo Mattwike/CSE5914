@@ -93,10 +93,13 @@ const GroupsPage: React.FC = () => {
           {user && (
             <section>
               <Heading level={2}>My Groups</Heading>
-              {!myGroupsLoading && myGroups.length === 0 && (
+              {myGroupsLoading ? (
+                <GroupGrid groups={[]} loading={true} onGroupClick={handleGroupClick} />
+              ) : myGroups.length === 0 ? (
                 <Text as="p">You haven't joined any groups yet.</Text>
+              ) : (
+                <GroupGrid groups={myGroups} onGroupClick={handleGroupClick} />
               )}
-              <GroupGrid groups={myGroups} loading={myGroupsLoading} onGroupClick={handleGroupClick} />
             </section>
           )}
 
