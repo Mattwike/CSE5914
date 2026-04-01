@@ -3,6 +3,7 @@ import { PageWrapper, MainContent } from '../components/layout'
 import { Button, Card, Heading, Input, Text } from '../components/ui'
 import '../styles/profile.css'
 import { getProfile, updateProfile } from '../services/auth'
+import { useAuthContext } from '../context/AuthContext'
 
 const Profile: React.FC = () => {
   const bioCharacterLimit = 280
@@ -24,23 +25,26 @@ const Profile: React.FC = () => {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [showValidation, setShowValidation] = useState(false)
   const [openMenu, setOpenMenu] = useState<'graduationYear' | 'hasCar' | null>(null)
+  const { user } = useAuthContext()
+  const requiredFilled = displayName.trim() !== '' && major.trim() !== '' && graduationYear !== ''
+
+  const basicFilled = displayName.trim() !== ''
+  const academicFilled = basicFilled && major.trim() !== '' && graduationYear !== ''
 
   useEffect(() => {
-    const userId = localStorage.getItem('userId')
-
-    if (!userId) {
+    if (!user?.user_id) {
       setError('No logged-in user found. Please log in again.')
       setLoading(false)
       return
     }
 
-    const storedUserId = userId
     let isMounted = true
 
     async function loadProfile() {
       try {
-        const profile = await getProfile(storedUserId)
+        const profile = await getProfile(user!.user_id)
         if (!isMounted) return
 
         setUserId(profile.id)
@@ -62,34 +66,34 @@ const Profile: React.FC = () => {
     }
 
     loadProfile()
-
-    return () => {
-      isMounted = false
-    }
-  }, [])
+    return () => { isMounted = false }
+  }, [user])
 
   useEffect(() => {
-    function closeMenu() {
-      setOpenMenu(null)
-    }
-
+    function closeMenu() { setOpenMenu(null) }
     window.addEventListener('click', closeMenu)
     return () => window.removeEventListener('click', closeMenu)
   }, [])
 
   const handleSave = async () => {
-    if (!userId) {
+    if (!user?.user_id) {
       setError('No logged-in user found. Please log in again.')
+      return
+    }
+    if (!requiredFilled) {
+      setShowValidation(true)
+      setError('Please fill in all required fields before saving.')
       return
     }
 
     setSaving(true)
     setSavedMessage('')
     setError('')
+    setShowValidation(false)
 
     try {
       const updatedProfile = await updateProfile({
-        id: userId,
+        id: user!.user_id,
         display_name: displayName,
         birth_date: birthDate || null,
         graduation_year: graduationYear ? Number(graduationYear) : null,
@@ -127,6 +131,8 @@ const Profile: React.FC = () => {
         <section className="profile-section" aria-busy={loading}>
           <Heading level={2} className="section-title">Profile Details</Heading>
           <Card className="card card--elevated section-card mt-2 profile-card">
+
+            {/* Account */}
             <div className="profile-block">
               <Text as="p" className="profile-block-title">Account</Text>
               <div className="profile-grid">
@@ -134,7 +140,6 @@ const Profile: React.FC = () => {
                   <label className="input-label">Email</label>
                   <p className="profile-static-value">{email}</p>
                 </div>
-
                 <div className="profile-static-field">
                   <label className="input-label">Status</label>
                   <p>
@@ -148,16 +153,26 @@ const Profile: React.FC = () => {
 
             <div className="profile-divider" />
 
+            {/* Basic */}
             <div className="profile-block">
-              <Text as="p" className="profile-block-title">Basic</Text>
+              <Text as="p" className="profile-block-title">
+                Basic
+                {displayName.trim() === '' && (
+                  <span style={{ color: 'var(--error, red)', fontSize: '0.8rem' }}> * required</span>
+                )}
+              </Text>
+              {showValidation && !displayName.trim() && (
+                <Text as="p" style={{ color: 'var(--error, red)', fontSize: '0.85rem', marginBottom: 8 }}>
+                  Display Name is required.
+                </Text>
+              )}
               <div className="profile-grid">
                 <Input
-                  label="Display Name"
+                  label="Display Name *"
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
                   placeholder="Enter your display name"
                 />
-
                 <div>
                   <label className="input-label" htmlFor="birth-date">Birth Date</label>
                   <input
@@ -168,7 +183,6 @@ const Profile: React.FC = () => {
                     onChange={(e) => setBirthDate(e.target.value)}
                   />
                 </div>
-
                 <div>
                   <label className="input-label" htmlFor="has-car-trigger">Has Car</label>
                   <div className="profile-dropdown" onClick={(e) => e.stopPropagation()}>
@@ -189,10 +203,7 @@ const Profile: React.FC = () => {
                             key={option.label}
                             type="button"
                             className={hasCar === option.value ? 'profile-dropdown-option profile-dropdown-option--active' : 'profile-dropdown-option'}
-                            onClick={() => {
-                              setHasCar(option.value)
-                              setOpenMenu(null)
-                            }}
+                            onClick={() => { setHasCar(option.value); setOpenMenu(null) }}
                           >
                             {option.label}
                           </button>
@@ -206,18 +217,34 @@ const Profile: React.FC = () => {
 
             <div className="profile-divider" />
 
-            <div className="profile-block">
-              <Text as="p" className="profile-block-title">Academic</Text>
+            {/* Academic - greyed out until displayName filled */}
+            <div
+              className="profile-block"
+              style={{
+                opacity: basicFilled ? 1 : 0.4,
+                pointerEvents: basicFilled ? 'auto' : 'none'
+              }}
+            >
+              <Text as="p" className="profile-block-title">
+                Academic
+                {basicFilled && (major.trim() === '' || graduationYear === '') && (
+                  <span style={{ color: 'var(--error, red)', fontSize: '0.8rem' }}> * required</span>
+                )}
+              </Text>
+              {showValidation && basicFilled && (!major.trim() || !graduationYear) && (
+                <Text as="p" style={{ color: 'var(--error, red)', fontSize: '0.85rem', marginBottom: 8 }}>
+                  Major and Graduation Year are required.
+                </Text>
+              )}
               <div className="profile-grid">
                 <Input
-                  label="Major"
+                  label="Major *"
                   value={major}
                   onChange={(e) => setMajor(e.target.value)}
                   placeholder="Enter your major"
                 />
-
                 <div>
-                  <label className="input-label" htmlFor="graduation-year-trigger">Graduation Year</label>
+                  <label className="input-label" htmlFor="graduation-year-trigger">Graduation Year *</label>
                   <div className="profile-dropdown" onClick={(e) => e.stopPropagation()}>
                     <button
                       id="graduation-year-trigger"
@@ -238,10 +265,7 @@ const Profile: React.FC = () => {
                             key={year}
                             type="button"
                             className={graduationYear === year ? 'profile-dropdown-option profile-dropdown-option--active' : 'profile-dropdown-option'}
-                            onClick={() => {
-                              setGraduationYear(year)
-                              setOpenMenu(null)
-                            }}
+                            onClick={() => { setGraduationYear(year); setOpenMenu(null) }}
                           >
                             {year}
                           </button>
@@ -256,7 +280,14 @@ const Profile: React.FC = () => {
 
             <div className="profile-divider" />
 
-            <div className="profile-block">
+            {/* About - greyed out until academic filled */}
+            <div
+              className="profile-block"
+              style={{
+                opacity: academicFilled ? 1 : 0.4,
+                pointerEvents: academicFilled ? 'auto' : 'none'
+              }}
+            >
               <Text as="p" className="profile-block-title">About</Text>
               <div className="profile-grid">
                 <div className="profile-span-full">
@@ -277,10 +308,15 @@ const Profile: React.FC = () => {
 
             <div className="profile-actions">
               {savedMessage ? <Text as="p" className="status-active">{savedMessage}</Text> : <span />}
-              <Button className="btn--small profile-save-btn" onClick={handleSave} disabled={saving || loading}>
+              <Button
+                className="btn--small profile-save-btn"
+                onClick={handleSave}
+                disabled={saving || loading}
+              >
                 {saving ? 'Saving...' : 'Save'}
               </Button>
             </div>
+
           </Card>
         </section>
       </MainContent>
