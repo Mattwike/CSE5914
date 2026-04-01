@@ -26,14 +26,12 @@ const CreateGroup: React.FC = () => {
 
     setLoading(true)
     try {
-      const body: Record<string, any> = {
+      await groupsService.createGroup({
         name: name.trim(),
         join_policy: joinPolicy,
-      }
-      if (description.trim()) body.description = description.trim()
-      if (photo.trim()) body.image_url = photo.trim()
-
-      await groupsService.createGroup(body)
+        description: description.trim() || undefined,
+        image_url: photo.trim() || undefined,
+      })
 
       setMessage('Group created successfully!')
       setTimeout(() => navigate('/groups'), 1500)

@@ -19,7 +19,7 @@ type Props = {
 }
 
 const GroupCard: React.FC<Props> = ({ group, onView }) => {
-  const { id, name, members, location, description, thumbnail, join_policy } = group
+  const { id, name, members, description, thumbnail, join_policy } = group
   const thumb = thumbnail || '/block.jpg'
   const thumbSrcSet = `${thumb} 640w, ${thumb} 320w`
   const thumbSizes = '(max-width: 420px) 100vw, 320px'
