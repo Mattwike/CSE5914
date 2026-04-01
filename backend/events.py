@@ -134,6 +134,7 @@ async def get_event(event_id: str):
         'location': location,
         'description': row.get('description'),
         'thumbnail': row.get('image_url'),
+        'createdBy': row.get('display_name'),
     }
 
 @router.delete("/{event_id}")
@@ -189,10 +190,12 @@ async def list_events():
     except Exception:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to load queries")
 
+    user_id = current_user["user_id"] if current_user else None
+
     try:
         with engine.connect() as connection:
-            r1 = connection.execute(q1).mappings().fetchall()
-            r2 = connection.execute(q2).mappings().fetchall()
+            r1 = connection.execute(q1, {'current_user_id': user_id}).mappings().fetchall()
+            r2 = connection.execute(q2, {'current_user_id': user_id}).mappings().fetchall()
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database error: {str(e)}")
 
