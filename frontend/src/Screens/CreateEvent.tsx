@@ -1,9 +1,10 @@
 import React, { useState, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { PageWrapper, MainContent } from '../components/layout'
 import { Card, Heading, Input, Button, Text } from '../components/ui'
 import { request } from '../services/api'
 import { supabase } from '../services/supabase'
+import { addGroupEvent } from '../services/groups'
 
 const CreateEvent: React.FC = () => {
   const [title, setTitle] = useState('')
@@ -23,6 +24,8 @@ const CreateEvent: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const groupId = searchParams.get('groupId')
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null
@@ -94,13 +97,19 @@ const CreateEvent: React.FC = () => {
       body.fee = fee !== '' ? fee : 0
       if (imageUrl) body.image_url = imageUrl
 
-      await request('/events/create', {
+      const result = await request('/events/create', {
         method: 'POST',
         body,
       })
 
+      // If creating from a group, auto-link the event to that group
+      if (groupId && result?.event_id) {
+        await addGroupEvent(groupId, result.event_id)
+      }
+
       setMessage('Event created successfully!')
-      setTimeout(() => navigate('/events'), 1500)
+      const redirectTo = groupId ? `/groups/${groupId}` : '/events'
+      setTimeout(() => navigate(redirectTo), 1500)
     } catch (err: any) {
       setError(err.message || 'Failed to create event.')
     } finally {
@@ -111,7 +120,12 @@ const CreateEvent: React.FC = () => {
   return (
     <PageWrapper>
       <MainContent>
-        <Heading level={1}>Create Event</Heading>
+        <Heading level={1}>{groupId ? 'Create Group Event' : 'Create Event'}</Heading>
+        {groupId && (
+          <Text as="p" style={{ color: 'var(--color-text-muted)', marginBottom: 'var(--space-sm)' }}>
+            This event will be linked to your group.
+          </Text>
+        )}
 
         <Card className="card section-card mt-2">
           <div className="form-stack">

@@ -472,7 +472,10 @@ const GroupDetail: React.FC = () => {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <Heading level={2}>Group Events</Heading>
                   {canManage && (
-                    <Button onClick={openAddEvent} disabled={actionLoading}>Add Event</Button>
+                    <div style={{ display: 'flex', gap: 'var(--space-xs)' }}>
+                      <Button onClick={() => navigate(`/events/create?groupId=${id}`)}>Create Event</Button>
+                      <Button variant="ghost" onClick={openAddEvent} disabled={actionLoading}>Link Existing</Button>
+                    </div>
                   )}
                 </div>
 
