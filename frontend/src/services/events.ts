@@ -1,5 +1,9 @@
 import { request } from './api'
 
+export interface CategoriesResponse {
+  categories: string[]
+}
+
 export type EventItem = {
   id: string
   title: string
@@ -8,6 +12,10 @@ export type EventItem = {
   description?: string
   thumbnail?: string
   createdBy?: string
+}
+
+export async function getCategories() {
+  return request('/events/categories') as Promise<CategoriesResponse>
 }
 
 export async function getEvents(userId?: string) {

@@ -22,6 +22,23 @@ engine = create_engine(database_url, pool_pre_ping=True)
 
 router = APIRouter(prefix="/events", tags=["events"])
 
+@router.get("/categories")
+async def get_categories():
+    sql_helper = SQLHelper()
+
+    try:
+        query = sql_helper.load_query("sql_queries/get_categories.sql")
+        with engine.connect() as connection:
+            result = connection.execute(query)
+            categories = [row["name"] for row in result.mappings().all()]
+    except Exception:
+        return JSONResponse(
+            status_code=500,
+            content={"message": "Database Error"}
+        )
+
+    return {"categories": categories}
+
 
 def _iso_str(val):
     if val is None:
@@ -44,6 +61,7 @@ class EventCreate(BaseModel):
     image_url: Optional[str] = None
     capacity: Optional[int] = None
     close_date: Optional[datetime] = None
+    fee: Optional[int] = 0
 
 @router.post("/create")
 async def create(event: EventCreate, current_user: dict = Depends(get_current_user)):
@@ -69,6 +87,7 @@ async def create(event: EventCreate, current_user: dict = Depends(get_current_us
                 'created_by': current_user["user_id"],
                 'capacity': event.capacity,
                 'close_date': event.close_date,
+                'fee': event.fee,
             })
             row = result.mappings().fetchone()
             connection.commit()
@@ -107,7 +126,7 @@ async def get_event(event_id: str):
         location = f"{loc_name}, {loc_addr}"
     else:
         location = loc_name or loc_addr or None
-    
+
     return {
         'id': str(row.get('id')),
         'title': row.get('title'),
@@ -124,26 +143,23 @@ async def delete_event(event_id: str, current_user: dict = Depends(get_current_u
 
 @router.get("/{user_id}/event")
 async def get_user_events(user_id: str, current_user: dict = Depends(get_current_user)):
-    # Return events created by the given user (from `events` table)
     sql_helper = SQLHelper()
     try:
-        query = sql_helper.load_query("sql_queries/select_events.sql")
+        query = sql_helper.load_query("sql_queries/get_user_events.sql")
     except Exception:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to load query")
 
     try:
         with engine.connect() as connection:
-            result = connection.execute(query)
+            result = connection.execute(query, {"user_id": current_user["user_id"]})
             rows = result.mappings().fetchall()
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database error: {str(e)}")
 
     items = []
     for r in rows:
-        start_time = r.get('start_time')
-        date_val = _iso_str(start_time)
         loc_name = r.get('location_name')
-        loc_addr = r.get('location_address')
+        loc_addr = r.get('location_address') if 'location_address' in r.keys() else None
         if loc_name and loc_addr:
             location = f"{loc_name}, {loc_addr}"
         else:
@@ -152,7 +168,7 @@ async def get_user_events(user_id: str, current_user: dict = Depends(get_current
         items.append({
             'id': str(r.get('id')),
             'title': r.get('title'),
-            'date': date_val,
+            'date': _iso_str(r.get('start_time')),
             'location': location,
             'description': r.get('description'),
             'thumbnail': r.get('image_url'),
@@ -163,7 +179,7 @@ async def get_user_events(user_id: str, current_user: dict = Depends(get_current
 
 @router.get("")
 @router.get("/")
-async def list_events(current_user: Optional[dict] = Depends(get_current_user)):
+async def list_events(current_user: dict = Depends(get_current_user)):
     """List combined events from external `event_options` and user `events`.
     Returns a list of mapped objects matching frontend `EventItem` shape.
     """
@@ -185,8 +201,6 @@ async def list_events(current_user: Optional[dict] = Depends(get_current_user)):
 
     items = []
     for r in list(r1) + list(r2):
-        start_time = r.get('start_time')
-        date_val = _iso_str(start_time)
         loc_name = r.get('location_name')
         loc_addr = r.get('location_address')
         if loc_name and loc_addr:
@@ -197,7 +211,7 @@ async def list_events(current_user: Optional[dict] = Depends(get_current_user)):
         items.append({
             'id': str(r.get('id')),
             'title': r.get('title'),
-            'date': date_val,
+            'date': _iso_str(r.get('start_time')),
             'location': location,
             'description': r.get('description'),
             'thumbnail': r.get('image_url'),

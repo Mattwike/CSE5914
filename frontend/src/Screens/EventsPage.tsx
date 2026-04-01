@@ -1,8 +1,10 @@
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { PageWrapper, MainContent } from '../components/layout'
 import { EventGrid, EventFilters, EventHero } from '../components/events'
-import { Button, Heading } from '../components/ui'
+import { Button, Heading, Text } from '../components/ui'
+import { useAuthContext } from '../context/AuthContext'
+import { request } from '../services/api'
 import '../styles/events.css'
 import useEvents from '../hooks/useEvents'
 import type { EventItem } from '../services/events'
@@ -13,7 +15,38 @@ const EventsPage: React.FC = () => {
   const [search, setSearch] = useState('')
   const [location, setLocation] = useState('')
   const [page, setPage] = useState(1)
-  const { events, loading, error } = useEvents()
+  const { events, loading } = useEvents()
+
+  const { user } = useAuthContext()
+  const [myEvents, setMyEvents] = useState<EventItem[]>([])
+  const [myEventsLoading, setMyEventsLoading] = useState(false)
+
+  useEffect(() => {
+    if (!user?.user_id) return
+    let mounted = true
+    async function loadMyEvents() {
+      setMyEventsLoading(true)
+      try {
+        const data = await request(`/events/${user!.user_id}/event`)
+        if (mounted) {
+          setMyEvents((data || []).map((e: any) => ({
+            id: e.id,
+            title: e.title,
+            date: e.date || '',
+            location: e.location || '',
+            description: e.description || '',
+            thumbnail: e.thumbnail || '',
+          })))
+        }
+      } catch {
+        if (mounted) setMyEvents([])
+      } finally {
+        if (mounted) setMyEventsLoading(false)
+      }
+    }
+    loadMyEvents()
+    return () => { mounted = false }
+  }, [user])
 
   // Filter logic lives in page (not in EventGrid)
   const filtered = useMemo(() => {
@@ -52,9 +85,20 @@ const EventsPage: React.FC = () => {
 
           <EventFilters search={search} setSearch={(s) => { setSearch(s); setPage(1) }} location={location} setLocation={(l) => { setLocation(l); setPage(1) }} locations={locations} />
 
+          {user && (
+            <section>
+              <Heading level={2}>My Events</Heading>
+              {!myEventsLoading && myEvents.length === 0 && (
+                <Text as="p">You haven't created any events yet.</Text>
+              )}
+              <EventGrid events={myEvents} loading={myEventsLoading} onEventClick={handleEventClick} />
+            </section>
+          )}
+
+          <Heading level={2} style={{ marginTop: 'var(--space-xl)' }}>All Events</Heading>
           <EventGrid events={paginated} loading={loading} onEventClick={handleEventClick} />
 
-          <div className="flex-center pagination">
+          <div className="flex-center pagination" style={{ marginTop: 'var(--space-xl)' }}>
             <Button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}>Previous</Button>
             <div>Page {page} of {totalPages}</div>
             <Button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages}>Next</Button>

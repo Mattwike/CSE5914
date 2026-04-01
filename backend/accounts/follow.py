@@ -23,7 +23,7 @@ router = APIRouter(prefix="/follow", tags=["follow"])
 async def get_public_profile(username: str):
     sql_helper = SQLHelper()
     try:
-        query = sql_helper.load_query("sql_queries/get_user_profile.sql")
+        query = sql_helper.load_query("sql_queries/get_user_pubProfile.sql")
     except Exception:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to load query")
 
