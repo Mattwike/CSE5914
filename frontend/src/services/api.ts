@@ -3,7 +3,7 @@ const API_BASE_URL = import.meta.env.VITE_WEBSITE_URL || ''
 export type RequestOptions = Omit<RequestInit, 'body'> & { body?: any }
 
 export async function request(path: string, opts: RequestOptions = {}) {
-  const url = `${API_BASE_URL}${path}`
+  const url = `${API_BASE_URL}/api${path}`
   const headers: Record<string, string> = opts.headers ? { ...(opts.headers as Record<string,string>) } : {}
   if (opts.body && !(opts.body instanceof FormData)) {
     headers['Content-Type'] = headers['Content-Type'] || 'application/json'
