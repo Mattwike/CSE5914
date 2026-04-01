@@ -23,7 +23,10 @@ async def get_categories():
         query = sql_helper.load_query("sql_queries/get_categories.sql")
         with engine.connect() as connection:
             result = connection.execute(query)
-            categories = [row["name"] for row in result.mappings().all()]
+            categories = [
+                {"id": row["id"], "name": row["name"]}
+                for row in result.mappings().all()
+            ]
     except Exception:
         return JSONResponse(
             status_code=500,
