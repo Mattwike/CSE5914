@@ -1,26 +1,13 @@
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { PageWrapper, MainContent } from '../components/layout'
 import { EventGrid, EventFilters, EventHero } from '../components/events'
-import { Button, Heading } from '../components/ui'
+import { Button, Heading, Text } from '../components/ui'
+import { useAuthContext } from '../context/AuthContext'
+import { request } from '../services/api'
 import '../styles/events.css'
-
-type EventItem = {
-  id: string
-  title: string
-  date: string
-  location?: string
-  description?: string
-}
-
-// Mock data: 25 items to demo pagination
-const MOCK_EVENTS: EventItem[] = Array.from({ length: 25 }).map((_, i) => ({
-  id: String(i + 1),
-  title: `Event #${i + 1}`,
-  date: new Date(Date.now() + i * 86400000).toISOString(),
-  location: i % 3 === 0 ? 'Auditorium' : i % 3 === 1 ? 'Room 101' : 'Online',
-  description: `This is a short description for event ${i + 1}.`,
-}))
+import useEvents from '../hooks/useEvents'
+import type { EventItem } from '../services/events'
 
 const PAGE_SIZE = 10
 
@@ -28,17 +15,48 @@ const EventsPage: React.FC = () => {
   const [search, setSearch] = useState('')
   const [location, setLocation] = useState('')
   const [page, setPage] = useState(1)
-  const [loading, setLoading] = useState(false)
+  const { events, loading } = useEvents()
+
+  const { user } = useAuthContext()
+  const [myEvents, setMyEvents] = useState<EventItem[]>([])
+  const [myEventsLoading, setMyEventsLoading] = useState(false)
+
+  useEffect(() => {
+    if (!user?.user_id) return
+    let mounted = true
+    async function loadMyEvents() {
+      setMyEventsLoading(true)
+      try {
+        const data = await request(`/events/${user!.user_id}/event`)
+        if (mounted) {
+          setMyEvents((data || []).map((e: any) => ({
+            id: e.id,
+            title: e.title,
+            date: e.date || '',
+            location: e.location || '',
+            description: e.description || '',
+            thumbnail: e.thumbnail || '',
+          })))
+        }
+      } catch {
+        if (mounted) setMyEvents([])
+      } finally {
+        if (mounted) setMyEventsLoading(false)
+      }
+    }
+    loadMyEvents()
+    return () => { mounted = false }
+  }, [user])
 
   // Filter logic lives in page (not in EventGrid)
   const filtered = useMemo(() => {
     const s = search.trim().toLowerCase()
-    return MOCK_EVENTS.filter((e) => {
-      if (s && !e.title.toLowerCase().includes(s)) return false
+    return (events || []).filter((e) => {
+      if (s && !String(e.title).toLowerCase().includes(s)) return false
       if (location && e.location !== location) return false
       return true
     })
-  }, [search, location])
+  }, [search, location, events])
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
 
@@ -47,14 +65,7 @@ const EventsPage: React.FC = () => {
     return filtered.slice(start, start + PAGE_SIZE)
   }, [filtered, page])
 
-  // simulate a short loading delay whenever filters/page change
-  React.useEffect(() => {
-    setLoading(true)
-    const t = setTimeout(() => setLoading(false), 400)
-    return () => clearTimeout(t)
-  }, [search, location, page])
-
-  const locations = useMemo(() => Array.from(new Set(MOCK_EVENTS.map((e) => e.location).filter(Boolean) as string[])), [])
+  const locations = useMemo(() => Array.from(new Set((events || []).map((e) => e.location).filter(Boolean) as string[])), [events])
 
   const navigate = useNavigate()
 
@@ -74,9 +85,20 @@ const EventsPage: React.FC = () => {
 
           <EventFilters search={search} setSearch={(s) => { setSearch(s); setPage(1) }} location={location} setLocation={(l) => { setLocation(l); setPage(1) }} locations={locations} />
 
+          {user && (
+            <section>
+              <Heading level={2}>My Events</Heading>
+              {!myEventsLoading && myEvents.length === 0 && (
+                <Text as="p">You haven't created any events yet.</Text>
+              )}
+              <EventGrid events={myEvents} loading={myEventsLoading} onEventClick={handleEventClick} />
+            </section>
+          )}
+
+          <Heading level={2} style={{ marginTop: 'var(--space-xl)' }}>All Events</Heading>
           <EventGrid events={paginated} loading={loading} onEventClick={handleEventClick} />
 
-          <div className="flex-center pagination">
+          <div className="flex-center pagination" style={{ marginTop: 'var(--space-xl)' }}>
             <Button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}>Previous</Button>
             <div>Page {page} of {totalPages}</div>
             <Button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages}>Next</Button>

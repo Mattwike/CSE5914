@@ -14,7 +14,16 @@ export default function useEvents(userId?: string) {
       setError(null)
       try {
         const data = await eventsService.getEvents(userId)
-        if (mounted) setEvents(data || [])
+        if (!mounted) return
+
+        // Defensive: ensure backend returned an array before setting state
+        if (Array.isArray(data)) {
+          setEvents(data || [])
+        } else {
+          console.error('Unexpected /events response, expected array:', data)
+          setEvents([])
+          setError('Invalid events response from server')
+        }
       } catch (err: any) {
         setError(err?.message || 'Failed to load events')
       } finally {

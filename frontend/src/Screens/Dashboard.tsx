@@ -1,10 +1,11 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button, Card, Heading, Text } from "../components/ui";
 import { EventCard } from '../components/events'
 import { GroupCard } from '../components/groups'
 import '../styles/dashboard.css'
 import { PageWrapper, MainContent } from "../components/layout";
+import useEvents from '../hooks/useEvents'
 
 const sampleEvents = [
   { id: 'e1', title: 'Campus Study Group', date: new Date().toISOString(), location: 'The Union', description: 'Quick study meet to prep for exams.', thumbnail: '/block.jpg' },
@@ -18,6 +19,14 @@ const sampleGroups = [
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
+  const { events } = useEvents()
+
+  const featuredEvent = useMemo(() => {
+    if (events && events.length > 0) {
+      return events[Math.floor(Math.random() * events.length)]
+    }
+    return sampleEvents[0]
+  }, [events])
 
   // const handleLogout = () => {
   //   alert("Logged out!");
@@ -64,7 +73,7 @@ const Dashboard: React.FC = () => {
                 <Button onClick={() => navigate('/events')}>View All</Button>
               </div>
               <div style={{ marginTop: 'var(--space-md)' }} className="dashboard-preview">
-                <EventCard event={sampleEvents[0]} onView={(id: string) => navigate(`/events/${id}`)} />
+                <EventCard event={featuredEvent as any} onView={(id: string) => navigate(`/events/${id}`)} />
               </div>
             </Card>
 
