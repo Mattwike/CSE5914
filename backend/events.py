@@ -108,6 +108,8 @@ async def get_event(event_id: str):
     else:
         location = loc_name or loc_addr or None
 
+    print(row.get('display_name'))
+    
     return {
         'id': str(row.get('id')),
         'title': row.get('title'),
@@ -115,6 +117,7 @@ async def get_event(event_id: str):
         'location': location,
         'description': row.get('description'),
         'thumbnail': row.get('image_url'),
+        'createdBy': row.get('display_name'),
     }
 
 @router.delete("/{event_id}")

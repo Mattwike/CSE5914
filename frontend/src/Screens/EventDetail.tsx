@@ -13,6 +13,7 @@ type EventItem = {
   location?: string
   description?: string | null
   thumbnail?: string | null
+  createdBy?: string | null
 }
 
 const EventDetail: React.FC = () => {
@@ -72,6 +73,12 @@ const EventDetail: React.FC = () => {
               <div className="detail-thumb-wrap">
                 <LazyImage src={event.thumbnail || '/block.jpg'} alt={event.title} width={640} height={320} className="detail-thumb" />
               </div>
+
+              {event.createdBy && (
+                <div className="detail-creator">
+                  <Text>Created by: {event.createdBy}</Text>
+                </div>
+              )}
 
               <div className="detail-meta">
                 <div className="detail-stats">{attendees} joined · {spotsLeft} spots left</div>
