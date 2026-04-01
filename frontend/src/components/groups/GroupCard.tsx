@@ -10,6 +10,7 @@ export type GroupItem = {
   location?: string
   description?: string
   thumbnail?: string
+  join_policy?: 'open' | 'approval'
 }
 
 type Props = {
@@ -18,7 +19,7 @@ type Props = {
 }
 
 const GroupCard: React.FC<Props> = ({ group, onView }) => {
-  const { id, name, members, location, description, thumbnail } = group
+  const { id, name, members, location, description, thumbnail, join_policy } = group
   const thumb = thumbnail || '/block.jpg'
   const thumbSrcSet = `${thumb} 640w, ${thumb} 320w`
   const thumbSizes = '(max-width: 420px) 100vw, 320px'
@@ -32,7 +33,7 @@ const GroupCard: React.FC<Props> = ({ group, onView }) => {
       <div className="event-card-body">
         <div className="event-card-header">
           <Heading level={3} id={`group-title-${id}`}>{name}</Heading>
-          <Text as="p" className="event-meta">{members} members{location ? ` · ${location}` : ''}</Text>
+          <Text as="p" className="event-meta">{members} members{join_policy ? ` · ${join_policy === 'open' ? 'Open' : 'Approval required'}` : ''}</Text>
         </div>
 
         {description ? <Text as="div" className="event-desc">{description}</Text> : null}
