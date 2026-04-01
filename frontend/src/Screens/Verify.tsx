@@ -2,14 +2,17 @@ import React, { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { verifyToken } from "../services/auth";
 import { PageWrapper, MainContent } from "../components/layout"
-import { Heading, Text } from "../components/ui"
+import { Heading, Text, Button } from "../components/ui"
+import { useAuthContext } from "../context/AuthContext"
 
 const Verify: React.FC = () => {
   const [searchParams] = useSearchParams();
   const [status, setStatus] = useState<string>("Verifying your account...");
+  const [verified, setVerified] = useState(false)
   const token = searchParams.get("token");
   const userEmail = searchParams.get("user_email");
   const navigate = useNavigate();
+  const { login: setAuth } = useAuthContext()
 
   useEffect(() => {
     if (!token || !userEmail) {
@@ -20,9 +23,12 @@ const Verify: React.FC = () => {
     const verify = async () => {
       try {
         const data = await verifyToken(token, userEmail);
-        setStatus(data.message);
-        if (data.message === "Account verified successfully!") {
-          setTimeout(() => navigate("/login"), 3000);
+        if (data.token) {
+          setAuth(data.token, data.user)
+          setStatus("Account verified successfully!")
+          setVerified(true)
+        } else {
+          setStatus(data.message || "Verification failed.")
         }
       } catch (error: any) {
         setStatus(error?.message || "Could not connect to the verification server.");
@@ -38,6 +44,11 @@ const Verify: React.FC = () => {
         <div className="text-center mt-2">
           <Heading level={1}>Verification Status</Heading>
           <Text as="p">{status}</Text>
+          {verified && (
+            <Button onClick={() => navigate("/profile")} className="mt-2">
+              Continue
+            </Button>
+          )}
         </div>
       </MainContent>
     </PageWrapper>
