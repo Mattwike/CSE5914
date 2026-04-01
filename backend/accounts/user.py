@@ -1,8 +1,10 @@
-from fastapi import APIRouter, BackgroundTasks
+from fastapi import APIRouter, BackgroundTasks, Depends
 from fastapi_mail import FastMail, MessageSchema, ConnectionConfig, MessageType
 from fastapi import HTTPException, status
 from fastapi.responses import JSONResponse
 from utils.crypto import CryptoManager
+from utils.jwt_helper import create_token
+from utils.auth_dependency import get_current_user
 from supabase import create_client, Client
 from dotenv import load_dotenv
 from pydantic import BaseModel
@@ -228,11 +230,29 @@ async def login(data: Data):
             content={"message": "Account not verified please check your email"}
         )
     else:
+        token = create_token(user_id=str(user['id']), email=user['email'])
         return {
-            "message": "Login successful!",
-            "id": str(user["id"]),
-            "email": user["email"]
+            "token": token,
+            "user": {
+                "user_id": str(user['id']),
+                "email": user['email'],
+            },
         }
+
+
+@router.get("/me")
+async def get_me(current_user: dict = Depends(get_current_user)):
+    return {"user_id": current_user["user_id"], "email": current_user["email"]}
+
+@router.post("/debug")
+async def debug(data: Data):
+    supabase: Client = create_client(Envs.SB_url, Envs.SB_key)
+    crypto_manager = CryptoManager()
+    uid = crypto_manager.hash_data(data.email.encode())
+    supabase.table("profile_tokens").delete().eq("id", uid).execute()
+    supabase.table("accounts").delete().eq("id", uid).execute()
+    return {"message": "Debug complete. User data deleted."}
+    
 
 @router.get("/profile")
 async def get_profile(id: str):
@@ -290,16 +310,6 @@ async def update_profile(profile: ProfileUpdate):
         )
 
     return dict(updated_user)
-
-@router.post("/debug")
-async def debug(data: Data):
-    supabase: Client = create_client(Envs.SB_url, Envs.SB_key)
-    crypto_manager = CryptoManager()
-    uid = crypto_manager.hash_data(data.email.encode())
-    supabase.table("profile_tokens").delete().eq("id", uid).execute()
-    supabase.table("accounts").delete().eq("id", uid).execute()
-    return {"message": "Debug complete. User data deleted."}
-    
 
 @router.delete("/delete_account")
 async def deleteAccount(data: Data, background_tasks: BackgroundTasks):

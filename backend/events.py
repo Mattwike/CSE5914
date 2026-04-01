@@ -1,17 +1,6 @@
-from fastapi import APIRouter, BackgroundTasks
-from fastapi.responses import JSONResponse
-from sqlalchemy import create_engine
-from utils.sql_helper import SQLHelper
-from dotenv import load_dotenv
+from fastapi import APIRouter, BackgroundTasks, Depends
+from utils.auth_dependency import get_current_user
 import os
-
-load_dotenv('.env')
-
-database_url = (
-    f"postgresql+psycopg2://{os.getenv('DB_USER')}:{os.getenv('PASSWORD')}"
-    f"@{os.getenv('HOST')}:{os.getenv('PORT')}/{os.getenv('DB_NAME')}?sslmode=require"
-)
-engine = create_engine(database_url, pool_pre_ping=True)
 
 router = APIRouter(prefix="/events", tags=["events"])
 
@@ -33,21 +22,25 @@ async def get_categories():
     return {"categories": categories}
 
 @router.post("/{user_id}/create")
-async def create(user_id: str):
+async def create(user_id: str, current_user: dict = Depends(get_current_user)):
     pass
 
 @router.get("/{event_id}")
-async def get_event(event_id: str):
+async def get_event(event_id: str, current_user: dict = Depends(get_current_user)):
     pass
 
 @router.delete("/{event_id}")
-async def delete_event(event_id: str):
+async def delete_event(event_id: str, current_user: dict = Depends(get_current_user)):
     pass
 
 @router.get("/{user_id}/event")
-async def get_user_events(user_id: str):
+async def get_user_events(user_id: str, current_user: dict = Depends(get_current_user)):
     pass
 
 @router.post("/{event_id}/modify")
-async def change_time(eventID: str, userID: str, new_start_time: str, new_end_time: str, new_location: str):
+async def change_time(eventID: str, userID: str, new_start_time: str, new_end_time: str, new_location: str, current_user: dict = Depends(get_current_user)):
+    pass
+
+@router.get("/{user_id}/eventOptions")
+async def get_event_options(user_id: str):
     pass

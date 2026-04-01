@@ -1,9 +1,8 @@
 import { request } from './api'
 
 export interface LoginResponse {
-  message: string
-  id: string
-  email: string
+  token: string
+  user: { user_id: string; email: string }
 }
 export interface ProfileResponse {
   id: string
