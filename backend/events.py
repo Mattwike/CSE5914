@@ -44,6 +44,7 @@ class EventCreate(BaseModel):
     image_url: Optional[str] = None
     capacity: Optional[int] = None
     close_date: Optional[datetime] = None
+    fee: Optional[int] = 0
 
 @router.post("/create")
 async def create(event: EventCreate, current_user: dict = Depends(get_current_user)):
@@ -69,6 +70,7 @@ async def create(event: EventCreate, current_user: dict = Depends(get_current_us
                 'created_by': current_user["user_id"],
                 'capacity': event.capacity,
                 'close_date': event.close_date,
+                'fee': event.fee,
             })
             row = result.mappings().fetchone()
             connection.commit()
@@ -123,26 +125,23 @@ async def delete_event(event_id: str, current_user: dict = Depends(get_current_u
 
 @router.get("/{user_id}/event")
 async def get_user_events(user_id: str, current_user: dict = Depends(get_current_user)):
-    # Return events created by the given user (from `events` table)
     sql_helper = SQLHelper()
     try:
-        query = sql_helper.load_query("sql_queries/select_events.sql")
+        query = sql_helper.load_query("sql_queries/get_user_events.sql")
     except Exception:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to load query")
 
     try:
         with engine.connect() as connection:
-            result = connection.execute(query)
+            result = connection.execute(query, {"user_id": current_user["user_id"]})
             rows = result.mappings().fetchall()
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database error: {str(e)}")
 
     items = []
     for r in rows:
-        start_time = r.get('start_time')
-        date_val = _iso_str(start_time)
         loc_name = r.get('location_name')
-        loc_addr = r.get('location_address')
+        loc_addr = r.get('location_address') if 'location_address' in r.keys() else None
         if loc_name and loc_addr:
             location = f"{loc_name}, {loc_addr}"
         else:
@@ -151,7 +150,7 @@ async def get_user_events(user_id: str, current_user: dict = Depends(get_current
         items.append({
             'id': str(r.get('id')),
             'title': r.get('title'),
-            'date': date_val,
+            'date': _iso_str(r.get('start_time')),
             'location': location,
             'description': r.get('description'),
             'thumbnail': r.get('image_url'),
@@ -182,8 +181,6 @@ async def list_events():
 
     items = []
     for r in list(r1) + list(r2):
-        start_time = r.get('start_time')
-        date_val = _iso_str(start_time)
         loc_name = r.get('location_name')
         loc_addr = r.get('location_address')
         if loc_name and loc_addr:
@@ -194,7 +191,7 @@ async def list_events():
         items.append({
             'id': str(r.get('id')),
             'title': r.get('title'),
-            'date': date_val,
+            'date': _iso_str(r.get('start_time')),
             'location': location,
             'description': r.get('description'),
             'thumbnail': r.get('image_url'),
