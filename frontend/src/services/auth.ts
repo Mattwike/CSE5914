@@ -1,6 +1,9 @@
 import { request } from './api'
 
-export interface LoginResponse { message: string }
+export interface LoginResponse {
+  token: string
+  user: { user_id: string; email: string }
+}
 
 export async function login(email: string, password: string) {
   return request('/account/login', { method: 'POST', body: { email, password } })
