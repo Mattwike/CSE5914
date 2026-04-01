@@ -7,9 +7,10 @@ export interface CategoriesResponse {
 export type EventItem = {
   id: string
   title: string
-  date: string
+  date?: string
   location?: string
   description?: string
+  thumbnail?: string
 }
 
 export async function getCategories() {
