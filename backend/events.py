@@ -107,8 +107,6 @@ async def get_event(event_id: str):
         location = f"{loc_name}, {loc_addr}"
     else:
         location = loc_name or loc_addr or None
-
-    print(row.get('display_name'))
     
     return {
         'id': str(row.get('id')),
@@ -165,7 +163,7 @@ async def get_user_events(user_id: str, current_user: dict = Depends(get_current
 
 @router.get("")
 @router.get("/")
-async def list_events():
+async def list_events(current_user: Optional[dict] = Depends(get_current_user)):
     """List combined events from external `event_options` and user `events`.
     Returns a list of mapped objects matching frontend `EventItem` shape.
     """
@@ -176,10 +174,12 @@ async def list_events():
     except Exception:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to load queries")
 
+    user_id = current_user["user_id"] if current_user else None
+
     try:
         with engine.connect() as connection:
-            r1 = connection.execute(q1).mappings().fetchall()
-            r2 = connection.execute(q2).mappings().fetchall()
+            r1 = connection.execute(q1, {'current_user_id': user_id}).mappings().fetchall()
+            r2 = connection.execute(q2, {'current_user_id': user_id}).mappings().fetchall()
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database error: {str(e)}")
 

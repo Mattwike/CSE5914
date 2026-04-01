@@ -243,21 +243,13 @@ async def debug(data: Data):
     supabase.table("profile_tokens").delete().eq("id", uid).execute()
     supabase.table("accounts").delete().eq("id", uid).execute()
     return {"message": "Debug complete. User data deleted."}
-    
 
-@router.delete("/delete_account")
+
+@router.delete("{user_id}")
 async def deleteAccount(data: Data, background_tasks: BackgroundTasks):
     pass
 
 
-@router.post("/create_event")
-async def createEvent(eventID: str, eventName: str):
-    pass
-
-@router.delete("/delete_event")
-async def deleteEvent(eventID: str, userID: str):
-    pass
-
-@router.post("modify_account")
+@router.post("/{user_id}/modify")
 async def modifyAccount(columnID: str, value: str):
     pass

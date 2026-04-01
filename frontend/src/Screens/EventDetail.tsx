@@ -76,7 +76,16 @@ const EventDetail: React.FC = () => {
 
               {event.createdBy && (
                 <div className="detail-creator">
-                  <Text>Created by: {event.createdBy}</Text>
+                  <Text>
+                    Created by: 
+                    <span
+                      role="link"
+                      onClick={() => navigate(`/profile/${encodeURIComponent(event.createdBy || '')}`)}
+                      style={{ color: 'var(--color-primary)', cursor: 'pointer', marginLeft: 6 }}
+                    >
+                      {event.createdBy}
+                    </span>
+                  </Text>
                 </div>
               )}
 

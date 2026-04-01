@@ -1,20 +1,25 @@
 SELECT
-    id,
+    e.id,
     NULL::text AS external_id,
-    title,
-    description,
+    e.title,
+    e.description,
     NULL::text AS category,
-    location_name,
-    location_address,
+    e.location_name,
+    e.location_address,
     NULL::double precision AS latitude,
     NULL::double precision AS longitude,
-    start_time,
-    end_time,
-    image_url,
-    source,
+    e.start_time,
+    e.end_time,
+    e.image_url,
+    e.source,
     NULL::text AS source_url,
     NULL::text AS website_url
-FROM events
-WHERE start_time IS NULL OR start_time >= NOW()
-ORDER BY start_time NULLS LAST
+FROM events e
+LEFT JOIN follows f
+    ON f.following_id = e.created_by
+    AND f.follower_id = :current_user_id
+WHERE e.start_time IS NULL OR e.start_time >= NOW()
+ORDER BY
+    CASE WHEN f.follower_id IS NOT NULL THEN 0 ELSE 1 END,
+    e.start_time NULLS LAST
 LIMIT 100;

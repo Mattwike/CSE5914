@@ -9,6 +9,7 @@ import CreateEvent from './Screens/CreateEvent'
 import GroupsPage from "./Screens/GroupsPage";
 import CreateGroup from './Screens/CreateGroup'
 import Profile from "./Screens/Profile";
+import PublicProfile from "./Screens/PublicProfile";
 import Settings from "./Screens/Settings";
 import Chat from './Screens/Chat'
 import EventDetail from './Screens/EventDetail'
@@ -37,6 +38,7 @@ function AppRoutes() {
         <Route path="/groups" element={<ProtectedRoute><GroupsPage /></ProtectedRoute>} />
         <Route path="/groups/create" element={<ProtectedRoute><CreateGroup /></ProtectedRoute>} />
         <Route path="/groups/:id" element={<ProtectedRoute><GroupDetail /></ProtectedRoute>} />
+        <Route path="/profile/:username" element={<PublicProfile />} />
         <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
         <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
         <Route path="/chat" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
