@@ -19,6 +19,15 @@ class Data(BaseModel):
     email: str
     password: str
 
+class ProfileUpdate(BaseModel):
+    id: str
+    display_name: str
+    birth_date: str | None = None
+    graduation_year: int | None = None
+    major: str
+    has_car: bool
+    bio: str
+
 class Envs:
     MAIL_USERNAME = os.getenv('MAIL_USERNAME')
     MAIL_PASSWORD = os.getenv('MAIL_PASSWORD')

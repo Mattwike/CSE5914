@@ -53,18 +53,40 @@
   padding: calc(var(--space-sm));
   border-radius: var(--radius-sm);
   border: 1px solid var(--color-border);
-  background: #fff;
-  color: var(--color-text-muted);
+  background: var(--color-bg);
+  color: var(--color-text);
 }
 .input::placeholder { color: var(--color-text-muted); }
 .input:focus { outline: none; box-shadow: 0 0 0 4px rgba(187,0,0,0.06); border-color: var(--color-primary); }
+.input:read-only,
+.input:disabled {
+  color: var(--color-text-muted);
+  background: var(--color-surface);
+}
+
+/* Keep selects visually aligned with text inputs across browsers */
+select.input {
+  appearance: none;
+  -webkit-appearance: none;
+  background-color: var(--color-bg);
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--color-text-muted) 50%),
+    linear-gradient(135deg, var(--color-text-muted) 50%, transparent 50%);
+  background-position:
+    calc(100% - 18px) calc(50% - 2px),
+    calc(100% - 12px) calc(50% - 2px);
+  background-repeat: no-repeat;
+  background-size: 6px 6px, 6px 6px;
+  color: var(--color-text);
+  padding-right: calc(var(--space-sm) * 3);
+}
 
 /* Override browser autofill color so typed text matches placeholder/autofill color */
 input:-webkit-autofill,
 input:-webkit-autofill:focus,
 input:-webkit-autofill:hover {
-  -webkit-text-fill-color: var(--color-text-muted) !important;
-  box-shadow: 0 0 0px 1000px #fff inset !important;
+  -webkit-text-fill-color: var(--color-text) !important;
+  box-shadow: 0 0 0px 1000px var(--color-bg) inset !important;
 }
 
 .page-wrapper { padding: var(--space-lg) 0; }
