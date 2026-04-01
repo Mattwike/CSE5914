@@ -11,6 +11,7 @@ export type EventItem = {
   location?: string
   description?: string
   thumbnail?: string
+  createdBy?: string
 }
 
 export async function getCategories() {
