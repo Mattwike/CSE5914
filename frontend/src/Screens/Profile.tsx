@@ -35,6 +35,7 @@ const Profile: React.FC = () => {
 
   useEffect(() => {
     if (!user?.user_id) {
+      userId && setUserId('')
       setError('No logged-in user found. Please log in again.')
       setLoading(false)
       return

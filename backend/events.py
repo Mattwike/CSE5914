@@ -1,5 +1,8 @@
 from fastapi import APIRouter, BackgroundTasks, Depends
+from fastapi.responses import JSONResponse
+from sqlalchemy import engine
 from utils.auth_dependency import get_current_user
+from utils.sql_helper import SQLHelper
 import os
 
 router = APIRouter(prefix="/events", tags=["events"])
