@@ -20,6 +20,25 @@ class CategoryPreferenceUpdate(BaseModel):
     user_id: str
     category_ids: list[str | int]
 
+@router.get("/categories")
+async def get_category_preferences(user_id: str):
+    sql_helper = SQLHelper()
+
+    try:
+        query = sql_helper.load_query("sql_queries/get_user_preference_categories.sql")
+        with engine.connect() as connection:
+            result = connection.execute(query, {
+                'user_id': user_id,
+            })
+            category_ids = [row["category_id"] for row in result.mappings().all()]
+    except Exception:
+        return JSONResponse(
+            status_code=500,
+            content={"message": "Database Error"}
+        )
+
+    return {"category_ids": category_ids}
+
 @router.put("/categories")
 async def update_category_preferences(payload: CategoryPreferenceUpdate):
     sql_helper = SQLHelper()

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { PageWrapper, MainContent } from '../components/layout'
 import { Button, Card, Heading, Text } from '../components/ui'
 import { getCategories, type CategoryItem } from '../services/events'
-import { saveCategoryPreferences } from '../services/preferences'
+import { getCategoryPreferences, saveCategoryPreferences } from '../services/preferences'
 
 const Settings: React.FC = () => {
   const [preferenceMessage, setPreferenceMessage] = useState('')
@@ -16,10 +16,24 @@ const Settings: React.FC = () => {
     let isMounted = true
 
     async function loadCategories() {
+      const userId = localStorage.getItem('userId')
+
+      if (!userId) {
+        if (isMounted) {
+          setCategoryError('No logged-in user found. Please log in again.')
+          setLoadingCategories(false)
+        }
+        return
+      }
+
       try {
-        const data = await getCategories()
+        const [categoriesData, preferencesData] = await Promise.all([
+          getCategories(),
+          getCategoryPreferences(userId),
+        ])
         if (!isMounted) return
-        setInterestOptions(data.categories)
+        setInterestOptions(categoriesData.categories)
+        setInterests(preferencesData.category_ids)
         setCategoryError('')
       } catch (err: any) {
         if (!isMounted) return
