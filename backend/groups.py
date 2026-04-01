@@ -17,6 +17,12 @@ class CreateGroupRequest(BaseModel):
     join_policy: str = "open"
 
 
+class UpdateGroupRequest(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    join_policy: Optional[str] = None
+
+
 class UpdateRoleRequest(BaseModel):
     role: str
 
@@ -109,6 +115,34 @@ async def delete_group(group_id: str, current_user: dict = Depends(get_current_u
     if row is None:
         raise HTTPException(status_code=403, detail="Only the group owner can delete the group")
     return {"message": "Group deleted"}
+
+
+@router.put("/{group_id}")
+async def update_group(group_id: str, data: UpdateGroupRequest, current_user: dict = Depends(get_current_user)):
+    if data.join_policy and data.join_policy not in ("open", "approval"):
+        raise HTTPException(status_code=400, detail="join_policy must be 'open' or 'approval'")
+
+    # Get current group to fill in unchanged fields
+    get_query = sql.load_query("sql_queries/groups/get_group.sql")
+    with engine.connect() as connection:
+        current = connection.execute(get_query, {"group_id": group_id}).mappings().fetchone()
+        if current is None:
+            raise HTTPException(status_code=404, detail="Group not found")
+
+        query = sql.load_query("sql_queries/groups/update_group.sql")
+        result = connection.execute(query, {
+            "group_id": group_id,
+            "user_id": current_user["user_id"],
+            "name": data.name or current["name"],
+            "description": data.description if data.description is not None else current["description"],
+            "join_policy": data.join_policy or current["join_policy"],
+        })
+        row = result.mappings().fetchone()
+        connection.commit()
+
+    if row is None:
+        raise HTTPException(status_code=403, detail="Only the group owner can edit the group")
+    return {"message": "Group updated", "group": dict(row)}
 
 
 # --- Join / Leave ---

@@ -65,6 +65,14 @@ export async function deleteGroup(groupId: string) {
   return request(`/groups/${encodeURIComponent(groupId)}`, { method: 'DELETE' })
 }
 
+export async function updateGroup(groupId: string, data: {
+  name?: string
+  description?: string
+  join_policy?: string
+}) {
+  return request(`/groups/${encodeURIComponent(groupId)}`, { method: 'PUT', body: data })
+}
+
 // --- Join / Leave ---
 
 export async function joinGroup(groupId: string) {
