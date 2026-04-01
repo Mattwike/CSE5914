@@ -69,7 +69,7 @@ async def create_account(data: Data, background_tasks: BackgroundTasks):
     sql_helper = SQLHelper()
     encrypted_password = crypto_manager.hash_data(data.password.encode())
     email = data.email
-    if email.endswith("@osu.edu") or email.endswith("@buckeyemail.osu.edu"):
+    if not email.endswith("@osu.edu") or email.endswith("@buckeyemail.osu.edu"):
         return {"message": "Invalid email domain. Please use an osu.edu email."}
     
     try:
