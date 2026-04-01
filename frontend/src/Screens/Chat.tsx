@@ -31,7 +31,7 @@ const Chat: React.FC = () => {
     const userMsg: Message = { id: String(Date.now()), role: 'user', text: input }
     const updatedMessages = [...messages, userMsg]
     
-    const historyToSend = updatedMessages.slice(-10).map(m => ({
+    const historyToSend = updatedMessages.slice(-15).map(m => ({
       role: m.role,
       content: m.text
     }))
