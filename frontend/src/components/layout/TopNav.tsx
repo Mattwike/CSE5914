@@ -24,7 +24,7 @@ const TopNav: React.FC = () => {
         <nav className="topnav" aria-label="Main navigation">
           <div className="topnav-left">
             <NavLink to="/" className="brand">
-              <LazyImage src="/public/university_logo.png" alt="Ohio State" width={240} height={40} />
+              <LazyImage src="/university_logo.png" alt="Ohio State" width={240} height={40} />
             </NavLink>
           </div>
 
