@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from typing import List, Optional
 from openai import OpenAI
 from supabase import create_client, Client
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import os
 import json
 
@@ -23,23 +23,26 @@ class ChatRequest(BaseModel):
     user_id: Optional[str] = None
 
 def fetch_event_context(user_id: Optional[str], supabase: Client) -> str:
-    now = datetime.now(timezone.utc).isoformat()
+    ohio_offset = timedelta(hours=-4)
+    now_utc = datetime.now(timezone.utc)
+    now_ohio = now_utc + ohio_offset
+    now_query = now_ohio.strftime("%Y-%m-%dT%H:%M:%S-04:00")
 
     events_res = (
         supabase.table("events")
         .select("title, description, location_name, location_address, start_time, end_time, fee")
-        .gte("start_time", now)
+        .gte("start_time", now_query)
         .order("start_time")
-        .limit(25)
+        .limit(0)
         .execute()
     )
 
     options_res = (
         supabase.table("event_options")
         .select("title, description, category, tags, location_name, start_time, end_time, is_free, price_level")
-        .gte("start_time", now)
+        .gte("start_time", now_query)
         .order("start_time")
-        .limit(10)
+        .limit(20)
         .execute()
     )
 
@@ -61,9 +64,16 @@ def fetch_event_context(user_id: Optional[str], supabase: Client) -> str:
     if not events and not options:
         return "No upcoming events found in the database."
 
-    lines = [f"Today's date/time (UTC): {now}", user_context, "\n--- UPCOMING EVENTS ---"]
+    lines = [f"Today's date/time (Ohio): {now_ohio.strftime('%Y-%m-%d %I:%M %p')}", user_context, "\n--- UPCOMING EVENTS ---"]
     for e in events:
-        start = e.get("start_time", "TBD")
+        raw_start = e.get("start_time")
+        if raw_start:
+            dt_utc = datetime.fromisoformat(raw_start.replace('Z', '+00:00'))
+            dt_ohio = dt_utc + ohio_offset
+            start = dt_ohio.strftime("%I:%M %p")
+        else:
+            start = "TBD"
+            
         location = e.get("location_name") or e.get("location_address") or "No location"
         fee = f"${e['fee']}" if e.get("fee") else "Free"
         lines.append(f"- {e['title']} | {start} | {location} | {fee}\n  {e.get('description') or ''}")
@@ -71,7 +81,13 @@ def fetch_event_context(user_id: Optional[str], supabase: Client) -> str:
     if options:
         lines.append("\n--- OTHER ACTIVITIES / PLACES ---")
         for o in options:
-            start = o.get("start_time", "Recurring")
+            raw_opt_start = o.get("start_time")
+            if raw_opt_start:
+                dt_opt_utc = datetime.fromisoformat(raw_opt_start.replace('Z', '+00:00'))
+                dt_opt_ohio = dt_opt_utc + ohio_offset
+                start = dt_opt_ohio.strftime("%I:%M %p")
+            else:
+                start = "Recurring"
             lines.append(f"- {o['title']} ({o.get('category', '')}) | {start} | {o.get('location_name', '')}")
 
     return "\n".join(lines)
