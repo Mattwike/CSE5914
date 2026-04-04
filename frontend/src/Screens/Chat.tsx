@@ -3,6 +3,7 @@ import { PageWrapper, MainContent } from '../components/layout'
 import { Heading, Button, Text, LazyImage } from '../components/ui'
 import '../styles/chat.css'
 import { request } from '../services/api'
+import { useAuthContext } from '../context/AuthContext'
 
 type Message = { id: string; role: 'user' | 'assistant' | 'system'; text: string }
 
@@ -20,6 +21,7 @@ const Chat: React.FC = () => {
   const [loading, setLoading] = useState(false)
   const [selectedEvent, setSelectedEvent] = useState<string | ''>('')
   const listRef = useRef<HTMLDivElement | null>(null)
+  const { user } = useAuthContext()
 
   useEffect(() => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: 'smooth' })
@@ -31,7 +33,7 @@ const Chat: React.FC = () => {
     const userMsg: Message = { id: String(Date.now()), role: 'user', text: input }
     const updatedMessages = [...messages, userMsg]
     
-    const historyToSend = updatedMessages.slice(-10).map(m => ({
+    const historyToSend = updatedMessages.slice(-15).map(m => ({
       role: m.role,
       content: m.text
     }))
@@ -44,9 +46,12 @@ const Chat: React.FC = () => {
     setLoading(true)
 
     try {
-      const response = await request('/chat/basic', { 
+      const response = await request('/chat/basic', {
         method: 'POST',
-        body: { history: historyToSend } 
+        body: { 
+          history: historyToSend,
+          user_id: user?.user_id ?? null
+        }
       })
 
       setMessages((prev) => 
