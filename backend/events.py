@@ -3,7 +3,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from sqlalchemy import create_engine
 from utils.sql_helper import SQLHelper
-from utils.auth_dependency import get_current_user
+from utils.auth_dependency import get_current_user, get_optional_current_user
 from dotenv import load_dotenv
 from typing import Optional
 from datetime import datetime
@@ -99,8 +99,71 @@ async def create(event: EventCreate, current_user: dict = Depends(get_current_us
 
     return {"message": "Event created successfully", "event_id": str(row['id'])}
 
+@router.post("/{event_id}/join")
+async def join_event(event_id: str, current_user: dict = Depends(get_current_user)):
+    sql_helper = SQLHelper()
+    try:
+        query = sql_helper.load_query("sql_queries/join_event.sql")
+        with engine.connect() as connection:
+            result = connection.execute(query, {
+                'event_id': event_id,
+                'user_id': current_user["user_id"],
+            })
+            row = result.mappings().fetchone()
+            connection.commit()
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database error: {str(e)}")
+
+    if not row:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot join: event is full, registration is closed, or you already joined")
+
+    return {"message": "Joined", "currentCapacity": row["current_capacity"]}
+
+
+@router.post("/{event_id}/leave")
+async def leave_event(event_id: str, current_user: dict = Depends(get_current_user)):
+    sql_helper = SQLHelper()
+    try:
+        query = sql_helper.load_query("sql_queries/leave_event.sql")
+        with engine.connect() as connection:
+            result = connection.execute(query, {
+                'event_id': event_id,
+                'user_id': current_user["user_id"],
+            })
+            row = result.mappings().fetchone()
+            connection.commit()
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database error: {str(e)}")
+
+    if not row:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Not currently attending this event")
+
+    return {"message": "Left", "currentCapacity": row["current_capacity"]}
+
+
+@router.get("/{event_id}/attendees")
+async def get_attendees(event_id: str):
+    sql_helper = SQLHelper()
+    try:
+        query = sql_helper.load_query("sql_queries/get_event_attendees.sql")
+        with engine.connect() as connection:
+            result = connection.execute(query, {'event_id': event_id})
+            rows = result.mappings().fetchall()
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database error: {str(e)}")
+
+    return [
+        {
+            'userId': str(r['user_id']),
+            'displayName': r.get('display_name'),
+            'joinedAt': _iso_str(r.get('joined_at')),
+        }
+        for r in rows
+    ]
+
+
 @router.get("/{event_id}")
-async def get_event(event_id: str):
+async def get_event(event_id: str, current_user: Optional[dict] = Depends(get_optional_current_user)):
     sql_helper = SQLHelper()
     try:
         query = sql_helper.load_query("sql_queries/select_event_by_id.sql")
@@ -111,6 +174,15 @@ async def get_event(event_id: str):
         with engine.connect() as connection:
             result = connection.execute(query, { 'id': event_id })
             row = result.mappings().fetchone()
+
+            is_attending = False
+            if row and current_user:
+                att_query = sql_helper.load_query("sql_queries/check_attendance.sql")
+                att_result = connection.execute(att_query, {
+                    'event_id': event_id,
+                    'user_id': current_user["user_id"],
+                })
+                is_attending = att_result.fetchone() is not None
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database error: {str(e)}")
 
@@ -135,6 +207,11 @@ async def get_event(event_id: str):
         'description': row.get('description'),
         'thumbnail': row.get('image_url'),
         'createdBy': row.get('display_name'),
+        'createdById': str(row.get('created_by')) if row.get('created_by') else None,
+        'capacity': row.get('capacity'),
+        'currentCapacity': row.get('current_capacity'),
+        'closeDate': _iso_str(row.get('close_date')),
+        'isAttending': is_attending,
     }
 
 @router.delete("/{event_id}")

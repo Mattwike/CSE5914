@@ -12,6 +12,11 @@ export type EventItem = {
   description?: string
   thumbnail?: string
   createdBy?: string
+  createdById?: string | null
+  capacity?: number | null
+  currentCapacity?: number
+  closeDate?: string | null
+  isAttending?: boolean
 }
 
 export async function getCategories() {
@@ -34,4 +39,16 @@ export async function createEvent(userId: string, payload: any) {
 
 export async function modifyEvent(eventId: string, payload: any) {
   return request(`/events/${encodeURIComponent(eventId)}/modify`, { method: 'POST', body: payload })
+}
+
+export async function joinEvent(eventId: string) {
+  return request(`/events/${encodeURIComponent(eventId)}/join`, { method: 'POST' })
+}
+
+export async function leaveEvent(eventId: string) {
+  return request(`/events/${encodeURIComponent(eventId)}/leave`, { method: 'POST' })
+}
+
+export async function getAttendees(eventId: string) {
+  return request(`/events/${encodeURIComponent(eventId)}/attendees`)
 }

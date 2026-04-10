@@ -1,4 +1,4 @@
-SELECT 
+SELECT
     t.*,
     p.display_name
 FROM (
@@ -7,7 +7,7 @@ FROM (
         external_id,
         title,
         description,
-        category::text AS category, -- Change this line: Cast to text
+        category::text AS category,
         location_name,
         location_address,
         latitude,
@@ -18,7 +18,10 @@ FROM (
         source::text AS source,
         source_url::text AS source_url,
         website_url::text AS website_url,
-        NULL::uuid AS created_by
+        NULL::uuid AS created_by,
+        NULL::int AS capacity,
+        NULL::int AS current_capacity,
+        NULL::timestamptz AS close_date
     FROM event_options
     UNION ALL
     SELECT
@@ -26,7 +29,7 @@ FROM (
         NULL::text AS external_id,
         title,
         description,
-        NULL::text AS category, -- This now matches the text cast above
+        NULL::text AS category,
         location_name,
         location_address,
         NULL::double precision AS latitude,
@@ -37,7 +40,10 @@ FROM (
         source::text AS source,
         NULL::text AS source_url,
         NULL::text AS website_url,
-        created_by
+        created_by,
+        capacity,
+        current_capacity,
+        close_date
     FROM events
 ) t
 LEFT JOIN profiles p ON t.created_by = p.id
