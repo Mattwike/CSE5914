@@ -41,6 +41,10 @@ export async function modifyEvent(eventId: string, payload: any) {
   return request(`/events/${encodeURIComponent(eventId)}/modify`, { method: 'POST', body: payload })
 }
 
+export async function getJoinedEvents() {
+  return request('/events/joined') as Promise<EventItem[]>
+}
+
 export async function joinEvent(eventId: string) {
   return request(`/events/${encodeURIComponent(eventId)}/join`, { method: 'POST' })
 }

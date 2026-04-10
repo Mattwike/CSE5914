@@ -20,6 +20,8 @@ const EventsPage: React.FC = () => {
   const { user } = useAuthContext()
   const [myEvents, setMyEvents] = useState<EventItem[]>([])
   const [myEventsLoading, setMyEventsLoading] = useState(false)
+  const [joinedEvents, setJoinedEvents] = useState<EventItem[]>([])
+  const [joinedEventsLoading, setJoinedEventsLoading] = useState(false)
 
   useEffect(() => {
     if (!user?.user_id) return
@@ -44,7 +46,28 @@ const EventsPage: React.FC = () => {
         if (mounted) setMyEventsLoading(false)
       }
     }
+    async function loadJoinedEvents() {
+      setJoinedEventsLoading(true)
+      try {
+        const data = await request('/events/joined')
+        if (mounted) {
+          setJoinedEvents((data || []).map((e: any) => ({
+            id: e.id,
+            title: e.title,
+            date: e.date || '',
+            location: e.location || '',
+            description: e.description || '',
+            thumbnail: e.thumbnail || '',
+          })))
+        }
+      } catch {
+        if (mounted) setJoinedEvents([])
+      } finally {
+        if (mounted) setJoinedEventsLoading(false)
+      }
+    }
     loadMyEvents()
+    loadJoinedEvents()
     return () => { mounted = false }
   }, [user])
 
@@ -88,10 +111,18 @@ const EventsPage: React.FC = () => {
           {user && (
             <section>
               <Heading level={2}>My Events</Heading>
+
+              <Heading level={3}>Created Events</Heading>
               {!myEventsLoading && myEvents.length === 0 && (
                 <Text as="p">You haven't created any events yet.</Text>
               )}
               <EventGrid events={myEvents} loading={myEventsLoading} onEventClick={handleEventClick} />
+
+              <Heading level={3} style={{ marginTop: 'var(--space-lg)' }}>Joined Events</Heading>
+              {!joinedEventsLoading && joinedEvents.length === 0 && (
+                <Text as="p">You haven't joined any events yet.</Text>
+              )}
+              <EventGrid events={joinedEvents} loading={joinedEventsLoading} onEventClick={handleEventClick} />
             </section>
           )}
 

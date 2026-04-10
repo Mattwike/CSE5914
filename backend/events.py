@@ -99,6 +99,37 @@ async def create(event: EventCreate, current_user: dict = Depends(get_current_us
 
     return {"message": "Event created successfully", "event_id": str(row['id'])}
 
+@router.get("/joined")
+async def get_joined_events(current_user: dict = Depends(get_current_user)):
+    sql_helper = SQLHelper()
+    try:
+        query = sql_helper.load_query("sql_queries/get_joined_events.sql")
+        with engine.connect() as connection:
+            result = connection.execute(query, {'user_id': current_user["user_id"]})
+            rows = result.mappings().fetchall()
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database error: {str(e)}")
+
+    items = []
+    for r in rows:
+        loc_name = r.get('location_name')
+        loc_addr = r.get('location_address')
+        if loc_name and loc_addr:
+            location = f"{loc_name}, {loc_addr}"
+        else:
+            location = loc_name or loc_addr or None
+
+        items.append({
+            'id': str(r.get('id')),
+            'title': r.get('title'),
+            'date': _iso_str(r.get('start_time')),
+            'location': location,
+            'description': r.get('description'),
+            'thumbnail': r.get('image_url'),
+        })
+
+    return items
+
 @router.post("/{event_id}/join")
 async def join_event(event_id: str, current_user: dict = Depends(get_current_user)):
     sql_helper = SQLHelper()
