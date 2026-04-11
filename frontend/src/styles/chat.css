@@ -17,7 +17,7 @@
 .message { display:flex; }
 .message-ai { justify-content: flex-start; }
 .message-user { justify-content: flex-end; }
-.message-bubble { max-width: 78%; padding: var(--space-sm); border-radius: 12px; background: var(--color-surface); color: var(--color-text); box-shadow: var(--shadow-sm); }
+.message-bubble { max-width: 78%; padding: var(--space-sm); border-radius: 12px; background: var(--color-surface); color: var(--color-text); box-shadow: var(--shadow-sm); white-space: pre-wrap;}
 .message-user .message-bubble { background: var(--color-primary); color: #fff; }
 
 .chat-input { display:flex; flex-direction: column; gap: var(--space-sm); }
