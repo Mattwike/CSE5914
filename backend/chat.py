@@ -42,7 +42,7 @@ def fetch_event_context(user_id: Optional[str], supabase: Client) -> str:
         .select("title, description, category, tags, location_name, start_time, end_time, is_free, price_level")
         .gte("start_time", now_query)
         .order("start_time")
-        .limit(20)
+        .limit(40)
         .execute()
     )
 
@@ -70,7 +70,7 @@ def fetch_event_context(user_id: Optional[str], supabase: Client) -> str:
         if raw_start:
             dt_utc = datetime.fromisoformat(raw_start.replace('Z', '+00:00'))
             dt_ohio = dt_utc + ohio_offset
-            start = dt_ohio.strftime("%I:%M %p")
+            start = dt_ohio.strftime("%B %d, %Y at %I:%M %p")
         else:
             start = "TBD"
             
@@ -85,7 +85,7 @@ def fetch_event_context(user_id: Optional[str], supabase: Client) -> str:
             if raw_opt_start:
                 dt_opt_utc = datetime.fromisoformat(raw_opt_start.replace('Z', '+00:00'))
                 dt_opt_ohio = dt_opt_utc + ohio_offset
-                start = dt_opt_ohio.strftime("%I:%M %p")
+                start = dt_opt_ohio.strftime("%B %d, %Y at %I:%M %p")
             else:
                 start = "Recurring"
             lines.append(f"- {o['title']} ({o.get('category', '')}) | {start} | {o.get('location_name', '')}")
@@ -124,7 +124,7 @@ Description
             openai_messages.append({"role": m.role, "content": m.content})
 
         response = client.chat.completions.create(
-            model="gpt-4o-mini",
+            model="gpt-5.4-mini",
             messages=openai_messages
         )
 
