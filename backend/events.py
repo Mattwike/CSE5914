@@ -134,42 +134,82 @@ async def get_joined_events(current_user: dict = Depends(get_current_user)):
 async def join_event(event_id: str, current_user: dict = Depends(get_current_user)):
     sql_helper = SQLHelper()
     try:
-        query = sql_helper.load_query("sql_queries/join_event.sql")
         with engine.connect() as connection:
+            # Try user-created events first
+            query = sql_helper.load_query("sql_queries/join_event.sql")
             result = connection.execute(query, {
                 'event_id': event_id,
                 'user_id': current_user["user_id"],
             })
             row = result.mappings().fetchone()
+
+            if row:
+                connection.commit()
+                return {"message": "Joined", "currentCapacity": row["current_capacity"]}
+
+            # Fall back to event_options
+            query = sql_helper.load_query("sql_queries/join_event_option.sql")
+            result = connection.execute(query, {
+                'event_id': event_id,
+                'user_id': current_user["user_id"],
+            })
+            row = result.mappings().fetchone()
+            if not row:
+                connection.rollback()
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot join: event is full, registration is closed, or you already joined")
+
+            # Get updated attendee count
+            count_query = sql_helper.load_query("sql_queries/count_event_option_attendees.sql")
+            count_result = connection.execute(count_query, {'event_id': event_id})
+            count_row = count_result.mappings().fetchone()
             connection.commit()
+
+            return {"message": "Joined", "currentCapacity": count_row["attendee_count"]}
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database error: {str(e)}")
-
-    if not row:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot join: event is full, registration is closed, or you already joined")
-
-    return {"message": "Joined", "currentCapacity": row["current_capacity"]}
 
 
 @router.post("/{event_id}/leave")
 async def leave_event(event_id: str, current_user: dict = Depends(get_current_user)):
     sql_helper = SQLHelper()
     try:
-        query = sql_helper.load_query("sql_queries/leave_event.sql")
         with engine.connect() as connection:
+            # Try user-created events first
+            query = sql_helper.load_query("sql_queries/leave_event.sql")
             result = connection.execute(query, {
                 'event_id': event_id,
                 'user_id': current_user["user_id"],
             })
             row = result.mappings().fetchone()
+
+            if row:
+                connection.commit()
+                return {"message": "Left", "currentCapacity": row["current_capacity"]}
+
+            # Fall back to event_options
+            query = sql_helper.load_query("sql_queries/leave_event_option.sql")
+            result = connection.execute(query, {
+                'event_id': event_id,
+                'user_id': current_user["user_id"],
+            })
+            row = result.mappings().fetchone()
+            if not row:
+                connection.rollback()
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Not currently attending this event")
+
+            # Get updated attendee count
+            count_query = sql_helper.load_query("sql_queries/count_event_option_attendees.sql")
+            count_result = connection.execute(count_query, {'event_id': event_id})
+            count_row = count_result.mappings().fetchone()
             connection.commit()
+
+            return {"message": "Left", "currentCapacity": count_row["attendee_count"]}
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database error: {str(e)}")
-
-    if not row:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Not currently attending this event")
-
-    return {"message": "Left", "currentCapacity": row["current_capacity"]}
 
 
 @router.get("/{event_id}/attendees")
@@ -207,13 +247,26 @@ async def get_event(event_id: str, current_user: Optional[dict] = Depends(get_op
             row = result.mappings().fetchone()
 
             is_attending = False
-            if row and current_user:
-                att_query = sql_helper.load_query("sql_queries/check_attendance.sql")
-                att_result = connection.execute(att_query, {
-                    'event_id': event_id,
-                    'user_id': current_user["user_id"],
-                })
-                is_attending = att_result.fetchone() is not None
+            event_option_attendee_count = None
+            if row:
+                is_event_option = row.get('created_by') is None
+
+                if current_user:
+                    if is_event_option:
+                        att_query = sql_helper.load_query("sql_queries/check_event_option_attendance.sql")
+                    else:
+                        att_query = sql_helper.load_query("sql_queries/check_attendance.sql")
+                    att_result = connection.execute(att_query, {
+                        'event_id': event_id,
+                        'user_id': current_user["user_id"],
+                    })
+                    is_attending = att_result.fetchone() is not None
+
+                if is_event_option:
+                    count_query = sql_helper.load_query("sql_queries/count_event_option_attendees.sql")
+                    count_result = connection.execute(count_query, {'event_id': event_id})
+                    count_row = count_result.mappings().fetchone()
+                    event_option_attendee_count = count_row["attendee_count"]
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database error: {str(e)}")
 
@@ -240,7 +293,7 @@ async def get_event(event_id: str, current_user: Optional[dict] = Depends(get_op
         'createdBy': row.get('display_name'),
         'createdById': str(row.get('created_by')) if row.get('created_by') else None,
         'capacity': row.get('capacity'),
-        'currentCapacity': row.get('current_capacity'),
+        'currentCapacity': event_option_attendee_count if event_option_attendee_count is not None else row.get('current_capacity'),
         'closeDate': _iso_str(row.get('close_date')),
         'isAttending': is_attending,
     }
