@@ -15,8 +15,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(api_router)
-app.include_router(recommendations.router)
-app.include_router(events.router)
-app.include_router(groups.router)
-app.include_router(chat.router, prefix="/chat", tags=["Chat"])
+app.include_router(api_router, prefix="/api")
+app.include_router(recommendations.router, prefix="/api")
+app.include_router(events.router,prefix="/api")
+app.include_router(groups.router, prefix="/api")
+app.include_router(chat.router, prefix="/api/chat", tags=["Chat"])
