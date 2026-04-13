@@ -28,6 +28,7 @@ def fetch_event_context(user_id: Optional[str], supabase: Client) -> str:
     now_ohio = now_utc + ohio_offset
     now_query = now_ohio.strftime("%Y-%m-%dT%H:%M:%S-04:00")
 
+    # --- 1. Fetch Events ---
     events_res = (
         supabase.table("events")
         .select("title, description, location_name, location_address, start_time, end_time, fee")
@@ -42,21 +43,58 @@ def fetch_event_context(user_id: Optional[str], supabase: Client) -> str:
         .select("title, description, category, tags, location_name, start_time, end_time, is_free, price_level")
         .gte("start_time", now_query)
         .order("start_time")
-        .limit(40)
+        .limit(60)
         .execute()
     )
 
-    user_context = ""
+    # --- 2. Build Comprehensive User Context ---
+    user_context_lines = []
     if user_id:
-        pref_res = (
+        user_context_lines.append("\n*** CURRENT USER CONTEXT ***")
+        
+        profile_res = supabase.table("profiles").select("display_name, major, graduation_year, has_car, bio").eq("id", user_id).execute()
+        if profile_res.data:
+            p = profile_res.data[0]
+            car_status = "Has a car" if p.get("has_car") else "Does not have a car"
+            user_context_lines.append(
+                f"User Profile: Name: {p.get('display_name', 'Student')}, Major: {p.get('major', 'N/A')}, "
+                f"Class of {p.get('graduation_year', 'N/A')}. {car_status}. Bio: {p.get('bio', 'None')}"
+            )
+
+        prefs_res = supabase.table("user_preferences").select("event_size, event_distance").eq("user_id", user_id).execute()
+        if prefs_res.data:
+            pr = prefs_res.data[0]
+            dist_map = {0: "On campus", 1: "Walkable", 2: "Driving distance"}
+            dist_str = dist_map.get(pr.get("event_distance"), "Any distance")
+            user_context_lines.append(f"Preferences: Prefers '{pr.get('event_size', 'any')}' sized events. Travel willingness: {dist_str}.")
+
+        cat_res = (
             supabase.table("user_preferences_categories")
             .select("categories(name)")
             .eq("user_id", user_id)
             .execute()
         )
-        category_names = [r["categories"]["name"] for r in pref_res.data if r.get("categories")]
+        category_names = [r["categories"]["name"] for r in cat_res.data if r.get("categories")]
         if category_names:
-            user_context = f"\nThis user's preferred categories: {', '.join(category_names)}."
+            user_context_lines.append(f"Interests: {', '.join(category_names)}.")
+
+        time_res = supabase.table("user_preferences_time").select("event_time").eq("user_id", user_id).execute()
+        if time_res.data:
+            time_map = {
+                0: "Weekday Mornings",
+                1: "Weekday Afternoons",
+                2: "Weekday Evenings",
+                3: "Weekend Mornings",
+                4: "Weekend Afternoons",
+                5: "Weekend Evenings"
+            }
+            time_strings = [time_map.get(r["event_time"], "Unknown Time") for r in time_res.data if "event_time" in r]
+            if time_strings:
+                user_context_lines.append(f"Preferred Time Slots: {', '.join(time_strings)}.")
+            
+        user_context_lines.append("****************************\n")
+
+    user_context = "\n".join(user_context_lines)
 
     events = events_res.data or []
     options = options_res.data or []
@@ -64,7 +102,8 @@ def fetch_event_context(user_id: Optional[str], supabase: Client) -> str:
     if not events and not options:
         return "No upcoming events found in the database."
 
-    lines = [f"Today's date/time (Ohio): {now_ohio.strftime('%Y-%m-%d %I:%M %p')}", user_context, "\n--- UPCOMING EVENTS ---"]
+    lines = [f"Today's date/time (Ohio): {now_ohio.strftime('%B %d, %Y at %I:%M %p')}", user_context, "\n--- UPCOMING EVENTS ---"]
+    
     for e in events:
         raw_start = e.get("start_time")
         if raw_start:
