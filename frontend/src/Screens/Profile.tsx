@@ -171,7 +171,7 @@ const Profile: React.FC = () => {
 
     try {
       // Save profile and preferences in parallel
-      const [updatedProfile, categoryResponse, preferenceResponse] = await Promise.all([
+      const [updatedProfile] = await Promise.all([
         updateProfile({
           id: user!.user_id,
           display_name: displayName,
