@@ -8,6 +8,12 @@
   margin-bottom: var(--space-lg);
 }
 
+/* When embedding the chat UI inside the hero, make the chat container span both columns
+   so the chat main and its side panel align with the page edges and featured grid */
+.dashboard-hero > .chat-page {
+  grid-column: 1 / -1;
+}
+
 .hero-left {
   display:flex;
   flex-direction: column;

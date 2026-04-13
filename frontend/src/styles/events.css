@@ -213,6 +213,64 @@
   .event-hero::after { top: calc(var(--space-lg) + 27vh); height: 9vh; background: linear-gradient(180deg, rgba(255,255,255,0) 0%, var(--color-bg) 100%); }
 }
 
+/* Sidebar layout for Events page
+   The sidebar (categories key) now lives inside the same `.events-main` container
+   as the event list. To avoid shrinking the event column we expand `.events-main`
+   by the sidebar width and offset the inner `.events-content` so the visible
+   event list keeps the original container width. The sidebar uses `position: sticky`
+   so it floats with the viewport while scrolling. */
+.events-with-sidebar { display: flex; align-items: flex-start; justify-content: center; }
+
+.events-main {
+  position: relative;
+  /* widen parent to accommodate the left key without shrinking the event list */
+  width: calc(var(--container-max-width) + 210px + var(--space-lg));
+  box-sizing: border-box;
+}
+
+.events-content {
+  width: var(--container-max-width);
+  margin-left: calc(210px + var(--space-lg));
+  box-sizing: border-box;
+  /* extra internal spacing so event cards don't sit flush against the key */
+  padding-left: var(--space-md);
+}
+
+.events-sidebar {
+  width: 210px;
+  position: sticky;
+  top: calc(var(--space-lg) + 56px);
+  left: 0;
+  align-self: flex-start;
+  z-index: 40;
+  max-height: calc(100vh - (var(--space-lg) + 80px));
+  overflow: auto;
+  padding: var(--space-sm);
+  padding-right: 8px;
+  /* Backdrop for readability over hero/scrolling content */
+  background-color: rgba(255,255,255,0.92);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-md);
+  backdrop-filter: blur(6px);
+}
+.events-sidebar nav a { color: var(--color-link); text-decoration: none; }
+.events-sidebar nav a:hover { text-decoration: underline; }
+
+@media (max-width: 900px) {
+  .events-with-sidebar { display: block; }
+  .events-sidebar { display: none; position: static; left: auto; top: auto; }
+  .events-main { width: 100%; }
+  .events-content { width: 100%; margin-left: 0; padding-left: 0; }
+}
+
+@media (prefers-color-scheme: dark) {
+  .events-sidebar {
+    background-color: rgba(30,46,71,0.78);
+    border-color: rgba(255,255,255,0.04);
+  }
+}
+
 /* Small gap under filters so the grid breathes */
 .filters-grid { margin-bottom: var(--space-md); }
 
