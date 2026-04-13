@@ -34,7 +34,7 @@ def fetch_event_context(user_id: Optional[str], supabase: Client) -> str:
         .select("title, description, location_name, location_address, start_time, end_time, fee")
         .gte("start_time", now_query)
         .order("start_time")
-        .limit(0)
+        .limit(20)
         .execute()
     )
 
@@ -43,7 +43,7 @@ def fetch_event_context(user_id: Optional[str], supabase: Client) -> str:
         .select("title, description, category, tags, location_name, start_time, end_time, is_free, price_level")
         .gte("start_time", now_query)
         .order("start_time")
-        .limit(60)
+        .limit(100)
         .execute()
     )
 
