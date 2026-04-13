@@ -1,7 +1,12 @@
 import { request } from './api'
 
+export interface CategoryItem {
+  id: string | number
+  name: string
+}
+
 export interface CategoriesResponse {
-  categories: string[]
+  categories: CategoryItem[]
 }
 
 export type EventItem = {

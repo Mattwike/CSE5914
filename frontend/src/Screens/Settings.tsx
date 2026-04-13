@@ -1,30 +1,74 @@
 import React, { useEffect, useState } from 'react'
 import { PageWrapper, MainContent } from '../components/layout'
 import { Button, Card, Heading, Text } from '../components/ui'
-import { getCategories } from '../services/events'
+import { getCategories, type CategoryItem } from '../services/events'
+import {
+  getCategoryPreferences,
+  getUserPreferences,
+  saveCategoryPreferences,
+  saveUserPreferences,
+} from '../services/preferences'
+import '../styles/profile.css'
 
 const Settings: React.FC = () => {
+  const travelDistanceOptions = ['On campus', 'Short commute', 'Anywhere']
+  const eventSizeLabels = ['Small (1-30)', 'Medium (31-150)', 'Large (151-500)', 'Mega (500+)']
+  const eventSizeValues = ['small', 'medium', 'large', 'mega'] as const
+  const eventTimeOptions = [
+    {
+      group: 'Weekdays',
+      options: [
+        { label: 'Mornings', value: 'Weekday mornings', id: 0 },
+        { label: 'Afternoons', value: 'Weekday afternoons', id: 1 },
+        { label: 'Evenings', value: 'Weekday evenings', id: 2 },
+      ],
+    },
+    {
+      group: 'Weekends',
+      options: [
+        { label: 'Mornings', value: 'Weekend mornings', id: 3 },
+        { label: 'Afternoons', value: 'Weekend afternoons', id: 4 },
+        { label: 'Evenings', value: 'Weekend evenings', id: 5 },
+      ],
+    },
+  ]
   const [preferenceMessage, setPreferenceMessage] = useState('')
-  const [interests, setInterests] = useState<string[]>(['Social', 'Career'])
-  const [interestOptions, setInterestOptions] = useState<string[]>([])
-  const [eventSize, setEventSize] = useState('Medium')
-  const [preferredTime, setPreferredTime] = useState('Evening')
-  const [eventVibe, setEventVibe] = useState('Meet people')
-  const [formatPreference, setFormatPreference] = useState('Either')
-  const [travelDistance, setTravelDistance] = useState('Anywhere on campus')
-  const [recommendationFrequency, setRecommendationFrequency] = useState('Weekly')
+  const [interests, setInterests] = useState<Array<string | number>>([])
+  const [interestOptions, setInterestOptions] = useState<CategoryItem[]>([])
+  const [travelDistance, setTravelDistance] = useState('Anywhere')
+  const [eventSize, setEventSize] = useState(4)
+  const [eventTimes, setEventTimes] = useState<number[]>([])
+  const [openMenu, setOpenMenu] = useState<'travelDistance' | null>(null)
   const [loadingCategories, setLoadingCategories] = useState(true)
+  const [savingCategories, setSavingCategories] = useState(false)
   const [categoryError, setCategoryError] = useState('')
 
   useEffect(() => {
     let isMounted = true
 
     async function loadCategories() {
+      const userId = localStorage.getItem('userId')
+
+      if (!userId) {
+        if (isMounted) {
+          setCategoryError('No logged-in user found. Please log in again.')
+          setLoadingCategories(false)
+        }
+        return
+      }
+
       try {
-        const data = await getCategories()
+        const [categoriesData, categoryPreferencesData, userPreferencesData] = await Promise.all([
+          getCategories(),
+          getCategoryPreferences(userId),
+          getUserPreferences(userId),
+        ])
         if (!isMounted) return
-        setInterestOptions(data.categories)
-        setInterests((current) => current.filter((item) => data.categories.includes(item)))
+        setInterestOptions(categoriesData.categories)
+        setInterests(categoryPreferencesData.category_ids)
+        setEventSize(eventSizeValues.indexOf(userPreferencesData.event_size) + 1 || 4)
+        setTravelDistance(travelDistanceOptions[userPreferencesData.event_distance] ?? 'Anywhere')
+        setEventTimes(userPreferencesData.event_times ?? [])
         setCategoryError('')
       } catch (err: any) {
         if (!isMounted) return
@@ -41,16 +85,62 @@ const Settings: React.FC = () => {
     }
   }, [])
 
-  const toggleInterest = (interest: string) => {
+  useEffect(() => {
+    function closeMenu() {
+      setOpenMenu(null)
+    }
+
+    window.addEventListener('click', closeMenu)
+    return () => window.removeEventListener('click', closeMenu)
+  }, [])
+
+  const toggleInterest = (categoryId: string | number) => {
     setInterests((current) =>
-      current.includes(interest)
-        ? current.filter((item) => item !== interest)
-        : [...current, interest]
+      current.includes(categoryId)
+        ? current.filter((item) => item !== categoryId)
+        : [...current, categoryId]
     )
   }
 
-  const savePreferences = () => {
-    setPreferenceMessage('Event preferences saved.')
+  const toggleEventTime = (option: number) => {
+    setEventTimes((current) =>
+      current.includes(option)
+        ? current.filter((item) => item !== option)
+        : [...current, option]
+    )
+  }
+
+  const savePreferences = async () => {
+    const userId = localStorage.getItem('userId')
+
+    if (!userId) {
+      setCategoryError('No logged-in user found. Please log in again.')
+      return
+    }
+
+    setSavingCategories(true)
+    setPreferenceMessage('')
+    setCategoryError('')
+
+    try {
+      const [categoryResponse, preferenceResponse] = await Promise.all([
+        saveCategoryPreferences({
+          user_id: userId,
+          category_ids: interests,
+        }),
+        saveUserPreferences({
+          user_id: userId,
+          event_size: eventSizeValues[eventSize - 1],
+          event_distance: travelDistanceOptions.indexOf(travelDistance) as 0 | 1 | 2,
+          event_times: eventTimes,
+        }),
+      ])
+      setPreferenceMessage(preferenceResponse?.message || categoryResponse?.message || 'Preferences saved.')
+    } catch (err: any) {
+      setCategoryError(err?.message || 'Unable to save preferences.')
+    } finally {
+      setSavingCategories(false)
+    }
   }
 
   return (
@@ -64,115 +154,118 @@ const Settings: React.FC = () => {
           <Card className="card card--elevated section-card mt-2">
             <div className="form-stack">
               <div>
-                <Text as="p">Tell us what kinds of events match your personality and routine.</Text>
+                <Text as="p" className="mb-1">What kinds of events interest you most?</Text>
+                {loadingCategories ? <Text as="p">Loading categories...</Text> : null}
+                {categoryError ? <Text as="p" className="error-text">{categoryError}</Text> : null}
+                <div className="profile-choice-grid">
+                  {interestOptions.map((interest) => {
+                    const selected = interests.includes(interest.id)
+
+                    return (
+                      <button
+                        key={String(interest.id)}
+                        type="button"
+                        className={selected ? 'profile-choice profile-choice--active' : 'profile-choice'}
+                        aria-pressed={selected}
+                        onClick={() => toggleInterest(interest.id)}
+                      >
+                        {interest.name}
+                      </button>
+                    )
+                  })}
+                </div>
+                <Text as="p" className="profile-helper">Choose as many as apply.</Text>
               </div>
 
               <div>
-                <Text as="p" className="mb-1">What kinds of events interest you most?</Text>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px' }}>
-                  {loadingCategories ? <Text as="p">Loading categories...</Text> : null}
-                  {categoryError ? <Text as="p" className="error-text">{categoryError}</Text> : null}
-                  {interestOptions.map((interest) => (
-                    <label key={interest} className="card" style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px' }}>
-                      <input
-                        type="checkbox"
-                        checked={interests.includes(interest)}
-                        onChange={() => toggleInterest(interest)}
-                      />
-                      <span>{interest}</span>
-                    </label>
+                <Text as="p" className="mb-1">When do you usually want events?</Text>
+                <div className="profile-choice-groups">
+                  {eventTimeOptions.map((section) => (
+                    <div key={section.group} className="profile-choice-group">
+                      <Text as="p" className="profile-choice-group-title">{section.group}</Text>
+                      <div className="profile-choice-stack">
+                        {section.options.map((option) => {
+                          const selected = eventTimes.includes(option.id)
+
+                          return (
+                            <button
+                              key={option.id}
+                              type="button"
+                              className={selected ? 'profile-choice profile-choice--active' : 'profile-choice'}
+                              aria-pressed={selected}
+                              onClick={() => toggleEventTime(option.id)}
+                            >
+                              {option.label}
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </div>
                   ))}
                 </div>
+                <Text as="p" className="profile-helper">Choose as many as apply.</Text>
               </div>
 
               <div>
                 <label className="input-label" htmlFor="event-size">What size events do you prefer?</label>
-                <select
-                  id="event-size"
-                  className="input"
-                  value={eventSize}
-                  onChange={(e) => setEventSize(e.target.value)}
-                >
-                  <option value="Small">Small</option>
-                  <option value="Medium">Medium</option>
-                  <option value="Large">Large</option>
-                </select>
+                <div className="profile-range-control">
+                  <input
+                    id="event-size"
+                    className="profile-range"
+                    style={{ '--range-progress': `${((eventSize - 1) / (eventSizeLabels.length - 1)) * 100}%` } as React.CSSProperties}
+                    type="range"
+                    min="1"
+                    max={eventSizeLabels.length}
+                    step="1"
+                    value={eventSize}
+                    onChange={(e) => setEventSize(Number(e.target.value))}
+                  />
+                  <div className="profile-range-labels" aria-hidden="true">
+                    {eventSizeLabels.map((label) => (
+                      <span key={label}>{label}</span>
+                    ))}
+                  </div>
+                </div>
+                <Text as="p" className="profile-helper">Selected: {eventSizeLabels[eventSize - 1]}</Text>
               </div>
 
               <div>
-                <label className="input-label" htmlFor="preferred-time">When do you usually want events?</label>
-                <select
-                  id="preferred-time"
-                  className="input"
-                  value={preferredTime}
-                  onChange={(e) => setPreferredTime(e.target.value)}
-                >
-                  <option value="Morning">Morning</option>
-                  <option value="Afternoon">Afternoon</option>
-                  <option value="Evening">Evening</option>
-                  <option value="Weekend">Weekend</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="input-label" htmlFor="event-vibe">What vibe are you looking for?</label>
-                <select
-                  id="event-vibe"
-                  className="input"
-                  value={eventVibe}
-                  onChange={(e) => setEventVibe(e.target.value)}
-                >
-                  <option value="Meet people">Meet people</option>
-                  <option value="Learn something">Learn something</option>
-                  <option value="Relax">Relax</option>
-                  <option value="Career growth">Career growth</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="input-label" htmlFor="format-preference">Do you prefer in-person or virtual events?</label>
-                <select
-                  id="format-preference"
-                  className="input"
-                  value={formatPreference}
-                  onChange={(e) => setFormatPreference(e.target.value)}
-                >
-                  <option value="In-person">In-person</option>
-                  <option value="Virtual">Virtual</option>
-                  <option value="Either">Either</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="input-label" htmlFor="travel-distance">How far are you willing to travel?</label>
-                <select
-                  id="travel-distance"
-                  className="input"
-                  value={travelDistance}
-                  onChange={(e) => setTravelDistance(e.target.value)}
-                >
-                  <option value="Walkable">Walkable</option>
-                  <option value="Short commute">Short commute</option>
-                  <option value="Anywhere on campus">Anywhere on campus</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="input-label" htmlFor="recommendation-frequency">How often do you want recommendations?</label>
-                <select
-                  id="recommendation-frequency"
-                  className="input"
-                  value={recommendationFrequency}
-                  onChange={(e) => setRecommendationFrequency(e.target.value)}
-                >
-                  <option value="Daily">Daily</option>
-                  <option value="Weekly">Weekly</option>
-                  <option value="Only when I check">Only when I check</option>
-                </select>
+                <label className="input-label" htmlFor="travel-distance-trigger">How far are you willing to travel?</label>
+                <div className="profile-dropdown" onClick={(e) => e.stopPropagation()}>
+                  <button
+                    id="travel-distance-trigger"
+                    type="button"
+                    className="profile-dropdown-trigger"
+                    aria-haspopup="listbox"
+                    aria-expanded={openMenu === 'travelDistance'}
+                    onClick={() => setOpenMenu((current) => current === 'travelDistance' ? null : 'travelDistance')}
+                  >
+                    {travelDistance}
+                  </button>
+                  {openMenu === 'travelDistance' ? (
+                    <div className="profile-dropdown-menu" role="listbox" aria-labelledby="travel-distance-trigger">
+                      {travelDistanceOptions.map((option) => (
+                        <button
+                          key={option}
+                          type="button"
+                          className={travelDistance === option ? 'profile-dropdown-option profile-dropdown-option--active' : 'profile-dropdown-option'}
+                          onClick={() => {
+                            setTravelDistance(option)
+                            setOpenMenu(null)
+                          }}
+                        >
+                          {option}
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
               </div>
 
               <div className="section-actions">
-                <Button className="btn--small" onClick={savePreferences}>Save Preferences</Button>
+                <Button className="btn--small" onClick={savePreferences} disabled={savingCategories || loadingCategories}>
+                  {savingCategories ? 'Saving...' : 'Save Preferences'}
+                </Button>
               </div>
               {preferenceMessage ? <Text as="p" className="status-active">{preferenceMessage}</Text> : null}
             </div>
