@@ -2,8 +2,10 @@ import React, { useState, useRef, useEffect } from 'react'
 import { PageWrapper, MainContent } from '../components/layout'
 import { Heading, Button, Text, LazyImage } from '../components/ui'
 import '../styles/chat.css'
+import { request } from '../services/api'
+import { useAuthContext } from '../context/AuthContext'
 
-type Message = { id: string; role: 'user' | 'ai' | 'system'; text: string }
+type Message = { id: string; role: 'user' | 'assistant' | 'system'; text: string }
 
 const MOCK_SUGGESTED = [
   { id: '1', title: 'Campus Meetup: Study Group' },
@@ -13,48 +15,56 @@ const MOCK_SUGGESTED = [
 
 const Chat: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([
-    { id: 'm1', role: 'ai', text: 'Hi — I can help explain or recommend events. Ask me anything about your suggested events.' },
+    { id: 'm1', role: 'assistant', text: 'Hi — I can help explain or recommend events. Ask me anything about your suggested events.' },
   ])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [selectedEvent, setSelectedEvent] = useState<string | ''>('')
   const listRef = useRef<HTMLDivElement | null>(null)
+  const { user } = useAuthContext()
 
   useEffect(() => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: 'smooth' })
   }, [messages])
 
-  const preparePayload = (userText: string) => {
-    // Prepare the payload to send to backend LLM service.
-    // Replace this with an actual fetch call when backend is available.
-    return {
-      input: userText,
-      context: selectedEvent ? { eventId: selectedEvent } : undefined,
-      history: messages.map((m) => ({ role: m.role, text: m.text })),
-    }
-  }
-
   const sendMessage = async () => {
     if (!input.trim()) return
+
     const userMsg: Message = { id: String(Date.now()), role: 'user', text: input }
-    setMessages((m) => [...m, userMsg])
+    const updatedMessages = [...messages, userMsg]
+    
+    const historyToSend = updatedMessages.slice(-15).map(m => ({
+      role: m.role,
+      content: m.text
+    }))
+
+    setMessages(updatedMessages)
     setInput('')
 
-    // Show loading AI bubble
-    const loadingId = `ai-${Date.now()}`
-    setMessages((m) => [...m, { id: loadingId, role: 'ai', text: 'Thinking…' }])
+    const loadingId = `assistant-${Date.now()}`
+    setMessages((prev) => [...prev, { id: loadingId, role: 'assistant', text: 'Thinking…' }])
     setLoading(true)
 
-    preparePayload(userMsg.text)
-    // TODO: replace the simulated response with a call to your backend endpoint
-    // Example:
-    // const res = await fetch('/api/chat', { method: 'POST', body: JSON.stringify(payload) })
+    try {
+      const response = await request('/chat/basic', {
+        method: 'POST',
+        body: { 
+          history: historyToSend,
+          user_id: user?.user_id ?? null
+        }
+      })
 
-    setTimeout(() => {
-      // Replace loading message with a mock AI response
-      setMessages((m) => m.map((x) => (x.id === loadingId ? { ...x, text: `Mock answer about: "${userMsg.text}"` } : x)))
+      setMessages((prev) => 
+        prev.map((x) => (x.id === loadingId ? { ...x, text: response.reply } : x))
+      )
+    } catch (error) {
+      console.error("Chat API Error:", error)
+      setMessages((prev) => 
+        prev.map((x) => (x.id === loadingId ? { ...x, text: "Sorry, I'm having trouble connecting." } : x))
+      )
+    } finally {
       setLoading(false)
-    }, 800)
+    }
   }
 
   return (
@@ -85,12 +95,21 @@ const Chat: React.FC = () => {
                 </div>
 
                 <div className="chat-compose">
-                  <textarea placeholder="Ask about this event or your suggestions..." value={input} onChange={(e) => setInput(e.target.value)} />
+                  <textarea 
+                    placeholder="Ask about this event or your suggestions..." 
+                    value={input} 
+                    onChange={(e) => setInput(e.target.value)} 
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();
+                            sendMessage();
+                        }
+                    }}
+                  />
                   <div className="chat-actions">
                     <Button onClick={sendMessage} disabled={loading || !input.trim()}>{loading ? 'Sending…' : 'Send'}</Button>
                   </div>
                 </div>
-                <div className="chat-note"><Text as="span">Responses are simulated locally until backend is connected.</Text></div>
               </div>
             </div>
 

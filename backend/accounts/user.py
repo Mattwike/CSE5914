@@ -1,13 +1,16 @@
-from fastapi import APIRouter, BackgroundTasks
+from fastapi import APIRouter, BackgroundTasks, Depends
 from fastapi_mail import FastMail, MessageSchema, ConnectionConfig, MessageType
 from fastapi import HTTPException, status
 from fastapi.responses import JSONResponse
 from utils.crypto import CryptoManager
+from utils.jwt_helper import create_token
+from utils.auth_dependency import get_current_user
 from supabase import create_client, Client
 from dotenv import load_dotenv
 from pydantic import BaseModel
-from sqlalchemy import create_engine, text
+from sqlalchemy import text
 from utils.sql_helper import SQLHelper
+from utils.db import engine
 import base64
 import os
 
@@ -37,14 +40,6 @@ class Envs:
     SB_key: str = os.getenv("SUPABASE_KEY")
     debug = os.getenv("DEBUG")
     website_url = os.getenv("WEBSITE_URL")
-    db_username = os.getenv("DB_USER")
-    db_password = os.getenv("PASSWORD")
-    db_host = os.getenv("HOST")
-    db_port = os.getenv("PORT")
-    db_name = os.getenv("DB_NAME")
-    database_url = f"postgresql+psycopg2://{db_username}:{db_password}@{db_host}:{db_port}/{db_name}?sslmode=require"
-
-engine = create_engine(Envs.database_url, pool_pre_ping=True)
 
 conf = ConnectionConfig(
     MAIL_USERNAME=Envs.MAIL_USERNAME,
@@ -67,7 +62,7 @@ async def create_account(data: Data, background_tasks: BackgroundTasks):
     sql_helper = SQLHelper()
     encrypted_password = crypto_manager.hash_data(data.password.encode())
     email = data.email
-    if not Envs.debug and (email.endswith("@osu.edu") or email.endswith("@buckeyemail.osu.edu")):
+    if not email.endswith("@osu.edu") or email.endswith("@buckeyemail.osu.edu"):
         return {"message": "Invalid email domain. Please use an osu.edu email."}
     
     try:
@@ -143,35 +138,34 @@ async def verify_token(token: str, user_email: str):
         token = crypto_manager.decrypt_data(bytes.fromhex(token), base64.urlsafe_b64decode(os.getenv('ENCRYPTION_KEY'))).decode()
         user_email = crypto_manager.decrypt_data(bytes.fromhex(user_email), base64.urlsafe_b64decode(os.getenv('ENCRYPTION_KEY'))).decode()
     except:
-        return JSONResponse(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            content={"message": "Crypto Error"}
-        )
-    
+        return JSONResponse(status_code=500, content={"message": "Crypto Error"})
+
     try:
         query = sql_helper.load_query("sql_queries/get_user_token.sql")
         with engine.connect() as connection:
-            result = connection.execute(query, {
-                'email': user_email.lower()
-            })
+            result = connection.execute(query, {'email': user_email.lower()})
             row = result.mappings().fetchone()
         valid_token = row['token']
     except:
-        return JSONResponse(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            content={"message": "Database Error"}
-        )
+        return JSONResponse(status_code=500, content={"message": "Database Error"})
 
-    if token == valid_token:
-        query = sql_helper.load_query("sql_queries/validate_user.sql")
-        with engine.connect() as connection:
-            result = connection.execute(query, {
-                'email': user_email.lower()
-            })
-            connection.commit()
-        return {"message": "Account verified successfully!"}
-    else:
-         return {"message": "Invalid or expired token."}
+    if token != valid_token:
+        return {"message": "Invalid or expired token."}
+
+    query = sql_helper.load_query("sql_queries/validate_user.sql")
+    with engine.connect() as connection:
+        result = connection.execute(query, {'email': user_email.lower()})
+        user = result.mappings().fetchone()
+        connection.commit()
+
+    jwt_token = create_token(user_id=str(user['id']), email=user['email'])
+    return {
+        "token": jwt_token,
+        "user": {
+            "user_id": str(user['id']),
+            "email": user['email'],
+        }
+    }
     
 
 @router.post("/resend_verification_email")
@@ -228,11 +222,20 @@ async def login(data: Data):
             content={"message": "Account not verified please check your email"}
         )
     else:
+        token = create_token(user_id=str(user['id']), email=user['email'])
         return {
-            "message": "Login successful!",
-            "id": str(user["id"]),
-            "email": user["email"]
+            "token": token,
+            "user": {
+                "user_id": str(user['id']),
+                "email": user['email'],
+            },
         }
+
+
+@router.get("/me")
+async def get_me(current_user: dict = Depends(get_current_user)):
+    return {"user_id": current_user["user_id"], "email": current_user["email"]}
+    
 
 @router.get("/profile")
 async def get_profile(id: str):
@@ -291,29 +294,16 @@ async def update_profile(profile: ProfileUpdate):
 
     return dict(updated_user)
 
-@router.post("/debug")
-async def debug(data: Data):
-    supabase: Client = create_client(Envs.SB_url, Envs.SB_key)
-    crypto_manager = CryptoManager()
-    uid = crypto_manager.hash_data(data.email.encode())
-    supabase.table("profile_tokens").delete().eq("id", uid).execute()
-    supabase.table("accounts").delete().eq("id", uid).execute()
-    return {"message": "Debug complete. User data deleted."}
-    
-
 @router.delete("/delete_account")
 async def deleteAccount(data: Data, background_tasks: BackgroundTasks):
     pass
 
 
-@router.post("/create_event")
-async def createEvent(eventID: str, eventName: str):
+@router.delete("{user_id}")
+async def deleteAccount(data: Data, background_tasks: BackgroundTasks):
     pass
 
-@router.delete("/delete_event")
-async def deleteEvent(eventID: str, userID: str):
-    pass
 
-@router.post("modify_account")
+@router.post("/{user_id}/modify")
 async def modifyAccount(columnID: str, value: str):
     pass

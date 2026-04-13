@@ -1,33 +1,98 @@
-import React from 'react'
-import { useParams } from 'react-router-dom'
+import React, { useEffect, useState } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
 import { PageWrapper, MainContent } from '../components/layout'
 import { Heading, Text, Button, LazyImage } from '../components/ui'
 import EventHero from '../components/events/EventHero'
+import { useAuthContext } from '../context/AuthContext'
 import '../styles/events.css'
-
-type EventItem = {
-  id: string
-  title: string
-  date: string
-  location?: string
-  description?: string
-}
-
-const makeMockEvent = (id?: string): EventItem => ({
-  id: id || '0',
-  title: `Event #${id}`,
-  date: new Date().toISOString(),
-  location: 'Auditorium',
-  description: `Detailed information for event ${id}. This area will later be populated from the backend.`
-})
+import * as eventsService from '../services/events'
+import type { EventItem } from '../services/events'
 
 const EventDetail: React.FC = () => {
   const { id } = useParams()
-  const event = makeMockEvent(id)
+  const navigate = useNavigate()
+  const { user } = useAuthContext()
+  const [event, setEvent] = useState<EventItem | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [isAttending, setIsAttending] = useState(false)
+  const [currentCapacity, setCurrentCapacity] = useState(0)
+  const [rsvpLoading, setRsvpLoading] = useState(false)
 
-  const attendees = Math.floor(Math.random() * 60) + 5
-  const capacity = attendees + (Math.floor(Math.random() * 40) + 5)
-  const spotsLeft = capacity - attendees
+  useEffect(() => {
+    let mounted = true
+    async function load() {
+      setLoading(true)
+      setError(null)
+      try {
+        if (!id) throw new Error('No event id')
+        const data = await eventsService.getEventById(id)
+        if (!mounted) return
+
+        setEvent(data || null)
+        setIsAttending(data?.isAttending ?? false)
+        setCurrentCapacity(data?.currentCapacity ?? 0)
+      } catch (e: any) {
+        console.error('Failed to load event', e)
+        if (mounted) setError(e?.message || 'Failed to load event')
+      } finally {
+        if (mounted) setLoading(false)
+      }
+    }
+    load()
+    return () => { mounted = false }
+  }, [id])
+
+  const spotsLeft = event?.capacity != null ? event.capacity - currentCapacity : null
+  const isFull = event?.capacity != null && currentCapacity >= event.capacity
+  const isClosed = event?.closeDate ? new Date(event.closeDate) < new Date() : false
+  const isCreator = user?.user_id === event?.createdById
+
+  const handleJoin = async () => {
+    if (!id) return
+    setRsvpLoading(true)
+    try {
+      const res = await eventsService.joinEvent(id)
+      setIsAttending(true)
+      setCurrentCapacity(res.currentCapacity)
+    } catch (e: any) {
+      console.error('Failed to join event', e)
+    } finally {
+      setRsvpLoading(false)
+    }
+  }
+
+  const handleLeave = async () => {
+    if (!id) return
+    setRsvpLoading(true)
+    try {
+      const res = await eventsService.leaveEvent(id)
+      setIsAttending(false)
+      setCurrentCapacity(res.currentCapacity)
+    } catch (e: any) {
+      console.error('Failed to leave event', e)
+    } finally {
+      setRsvpLoading(false)
+    }
+  }
+
+  const renderRsvpButton = () => {
+    if (!event) return null
+
+    if (isCreator) {
+      return <Button disabled>Your Event</Button>
+    }
+    if (isClosed) {
+      return <Button disabled>Registration Closed</Button>
+    }
+    if (isAttending) {
+      return <Button onClick={handleLeave} disabled={rsvpLoading}>{rsvpLoading ? 'Leaving...' : 'Leave Event'}</Button>
+    }
+    if (isFull) {
+      return <Button disabled>Event Full</Button>
+    }
+    return <Button onClick={handleJoin} disabled={rsvpLoading}>{rsvpLoading ? 'Joining...' : 'Join Event'}</Button>
+  }
 
   return (
     <PageWrapper>
@@ -35,24 +100,64 @@ const EventDetail: React.FC = () => {
         <EventHero />
 
         <div className="detail-card detail-card--centered">
-          <Heading level={1} className="detail-title">{event.title}</Heading>
+          {loading ? (
+            <Heading level={2}>Loading…</Heading>
+          ) : error ? (
+            <div>
+              <Heading level={2}>Error</Heading>
+              <Text as="div">{error}</Text>
+              <div className="event-actions">
+                <Button onClick={() => navigate(-1)}>Back</Button>
+              </div>
+            </div>
+          ) : event ? (
+            <>
+              <Heading level={1} className="detail-title">{event.title}</Heading>
 
-          <div className="detail-thumb-wrap">
-            <LazyImage src="/block.jpg" alt={event.title} width={640} height={320} className="detail-thumb" />
-          </div>
+              <div className="detail-thumb-wrap">
+                <LazyImage src={event.thumbnail || '/block.jpg'} alt={event.title} width={640} height={320} className="detail-thumb" />
+              </div>
 
-          <div className="detail-meta">
-            <div className="detail-stats">{attendees} joined · {spotsLeft} spots left</div>
-            <div className="detail-location">{event.location}</div>
-          </div>
+              {event.createdBy && (
+                <div className="detail-creator">
+                  <Text>
+                    Created by:
+                    <span
+                      role="link"
+                      onClick={() => navigate(`/profile/${encodeURIComponent(event.createdBy || '')}`)}
+                      style={{ color: 'var(--color-primary)', cursor: 'pointer', marginLeft: 6 }}
+                    >
+                      {event.createdBy}
+                    </span>
+                  </Text>
+                </div>
+              )}
 
-          <div className="detail-description">
-            <Text as="div">{event.description}</Text>
-          </div>
+              <div className="detail-meta">
+                <div className="detail-stats">
+                  {currentCapacity} joined{event.capacity != null ? ` · ${spotsLeft} spots left` : ''}
+                </div>
+                <div className="detail-location">{event.location}</div>
+                <div className="detail-date">{event.date ? new Date(event.date).toLocaleString() : 'TBA'}</div>
+              </div>
 
-          <div className="event-actions">
-            <Button onClick={() => window.history.back()}>Back</Button>
-          </div>
+              <div className="detail-description">
+                <Text as="div">{event.description || 'No description provided.'}</Text>
+              </div>
+
+              <div className="event-actions">
+                {renderRsvpButton()}
+                <Button onClick={() => navigate(-1)}>Back</Button>
+              </div>
+            </>
+          ) : (
+            <div>
+              <Heading level={2}>Event not found</Heading>
+              <div className="event-actions">
+                <Button onClick={() => navigate(-1)}>Back</Button>
+              </div>
+            </div>
+          )}
         </div>
       </MainContent>
     </PageWrapper>

@@ -1,3 +1,4 @@
-update profiles
-set verified = true
-where email = :email;
+UPDATE profiles
+SET verified = true
+WHERE email = :email
+RETURNING id, email;

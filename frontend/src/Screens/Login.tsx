@@ -3,11 +3,13 @@ import { useNavigate } from "react-router-dom";
 import { Input, Button, Heading, Text, Card, LazyImage } from "../components/ui";
 import { PageWrapper, MainContent } from "../components/layout";
 import useAuth from "../hooks/useAuth"
+import { useAuthContext } from "../context/AuthContext"
 import '../styles/home.css'
 
 function Login() {
   const navigate = useNavigate();
   const { login, loading, error } = useAuth()
+  const { login: setAuth } = useAuthContext()
 
   // State for inputs
   const [email, setEmail] = useState("");
@@ -16,13 +18,10 @@ function Login() {
   const handleLogin = async () => {
     try {
       const res = await login(email, password)
-      localStorage.setItem('userId', res.id)
-      localStorage.setItem('userEmail', res.email)
-      alert("Login Successful!")
+      setAuth(res.token, res.user)
       navigate("/dashboard")
     } catch (err: any) {
       console.error("Login Error:", err)
-      alert(err?.message || 'Could not connect to the server.')
     }
   }
 
