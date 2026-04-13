@@ -4,6 +4,13 @@ import { Button, Card, Heading, Input, Text } from '../components/ui'
 import '../styles/profile.css'
 import { getProfile, updateProfile } from '../services/auth'
 import { useAuthContext } from '../context/AuthContext'
+import { getCategories, type CategoryItem } from '../services/events'
+import {
+  getCategoryPreferences,
+  getUserPreferences,
+  saveCategoryPreferences,
+  saveUserPreferences,
+} from '../services/preferences'
 
 const Profile: React.FC = () => {
   const bioCharacterLimit = 280
@@ -12,6 +19,31 @@ const Profile: React.FC = () => {
     { label: 'Yes', value: true },
     { label: 'No', value: false },
   ]
+  
+  // Settings/Preferences constants
+  const travelDistanceOptions = ['On campus', 'Short commute', 'Anywhere']
+  const eventSizeLabels = ['Small (1-30)', 'Medium (31-150)', 'Large (151-500)', 'Mega (500+)']
+  const eventSizeValues = ['small', 'medium', 'large', 'mega'] as const
+  const eventTimeOptions = [
+    {
+      group: 'Weekdays',
+      options: [
+        { label: 'Mornings', value: 'Weekday mornings', id: 0 },
+        { label: 'Afternoons', value: 'Weekday afternoons', id: 1 },
+        { label: 'Evenings', value: 'Weekday evenings', id: 2 },
+      ],
+    },
+    {
+      group: 'Weekends',
+      options: [
+        { label: 'Mornings', value: 'Weekend mornings', id: 3 },
+        { label: 'Afternoons', value: 'Weekend afternoons', id: 4 },
+        { label: 'Evenings', value: 'Weekend evenings', id: 5 },
+      ],
+    },
+  ]
+
+  // Profile states
   const [email, setEmail] = useState('')
   const [userId, setUserId] = useState('')
   const [isVerified, setIsVerified] = useState(false)
@@ -26,13 +58,24 @@ const Profile: React.FC = () => {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [showValidation, setShowValidation] = useState(false)
-  const [openMenu, setOpenMenu] = useState<'graduationYear' | 'hasCar' | null>(null)
+  const [openMenu, setOpenMenu] = useState<'graduationYear' | 'hasCar' | 'travelDistance' | null>(null)
+  
+  // Preferences states
+  const [preferenceMessage, setPreferenceMessage] = useState('')
+  const [interests, setInterests] = useState<Array<string | number>>([])
+  const [interestOptions, setInterestOptions] = useState<CategoryItem[]>([])
+  const [travelDistance, setTravelDistance] = useState('Anywhere')
+  const [eventSize, setEventSize] = useState(4)
+  const [eventTimes, setEventTimes] = useState<number[]>([])
+  const [loadingCategories, setLoadingCategories] = useState(true)
+  const [categoryError, setCategoryError] = useState('')
+
   const { user } = useAuthContext()
   const requiredFilled = displayName.trim() !== '' && major.trim() !== '' && graduationYear !== ''
-
   const basicFilled = displayName.trim() !== ''
   const academicFilled = basicFilled && major.trim() !== '' && graduationYear !== ''
 
+  // Load profile and preferences
   useEffect(() => {
     if (!user?.user_id) {
       userId && setUserId('')
@@ -43,11 +86,18 @@ const Profile: React.FC = () => {
 
     let isMounted = true
 
-    async function loadProfile() {
+    async function loadData() {
       try {
-        const profile = await getProfile(user!.user_id)
+        const [profile, categoriesData, categoryPreferencesData, userPreferencesData] = await Promise.all([
+          getProfile(user!.user_id),
+          getCategories(),
+          getCategoryPreferences(user!.user_id),
+          getUserPreferences(user!.user_id),
+        ])
+        
         if (!isMounted) return
 
+        // Load profile data
         setUserId(profile.id)
         setEmail(profile.email ?? '')
         setIsVerified(Boolean(profile.verified))
@@ -57,16 +107,25 @@ const Profile: React.FC = () => {
         setMajor(profile.major ?? '')
         setHasCar(Boolean(profile.has_car))
         setBio(profile.bio ?? '')
+
+        // Load preference data
+        setInterestOptions(categoriesData.categories)
+        setInterests(categoryPreferencesData.category_ids)
+        setEventSize(eventSizeValues.indexOf(userPreferencesData.event_size) + 1 || 4)
+        setTravelDistance(travelDistanceOptions[userPreferencesData.event_distance] ?? 'Anywhere')
+        setEventTimes(userPreferencesData.event_times ?? [])
+        
         setError('')
       } catch (err: any) {
         if (!isMounted) return
         setError(err?.message || 'Unable to load profile.')
       } finally {
         if (isMounted) setLoading(false)
+        if (isMounted) setLoadingCategories(false)
       }
     }
 
-    loadProfile()
+    loadData()
     return () => { isMounted = false }
   }, [user])
 
@@ -75,6 +134,22 @@ const Profile: React.FC = () => {
     window.addEventListener('click', closeMenu)
     return () => window.removeEventListener('click', closeMenu)
   }, [])
+
+  const toggleInterest = (categoryId: string | number) => {
+    setInterests((current) =>
+      current.includes(categoryId)
+        ? current.filter((item) => item !== categoryId)
+        : [...current, categoryId]
+    )
+  }
+
+  const toggleEventTime = (option: number) => {
+    setEventTimes((current) =>
+      current.includes(option)
+        ? current.filter((item) => item !== option)
+        : [...current, option]
+    )
+  }
 
   const handleSave = async () => {
     if (!user?.user_id) {
@@ -90,18 +165,33 @@ const Profile: React.FC = () => {
     setSaving(true)
     setSavedMessage('')
     setError('')
+    setCategoryError('')
+    setPreferenceMessage('')
     setShowValidation(false)
 
     try {
-      const updatedProfile = await updateProfile({
-        id: user!.user_id,
-        display_name: displayName,
-        birth_date: birthDate || null,
-        graduation_year: graduationYear ? Number(graduationYear) : null,
-        major,
-        has_car: hasCar,
-        bio,
-      })
+      // Save profile and preferences in parallel
+      const [updatedProfile, categoryResponse, preferenceResponse] = await Promise.all([
+        updateProfile({
+          id: user!.user_id,
+          display_name: displayName,
+          birth_date: birthDate || null,
+          graduation_year: graduationYear ? Number(graduationYear) : null,
+          major,
+          has_car: hasCar,
+          bio,
+        }),
+        saveCategoryPreferences({
+          user_id: user!.user_id,
+          category_ids: interests,
+        }),
+        saveUserPreferences({
+          user_id: user!.user_id,
+          event_size: eventSizeValues[eventSize - 1],
+          event_distance: travelDistanceOptions.indexOf(travelDistance) as 0 | 1 | 2,
+          event_times: eventTimes,
+        }),
+      ])
 
       setUserId(updatedProfile.id)
       setEmail(updatedProfile.email ?? '')
@@ -112,7 +202,8 @@ const Profile: React.FC = () => {
       setMajor(updatedProfile.major ?? '')
       setHasCar(Boolean(updatedProfile.has_car))
       setBio(updatedProfile.bio ?? '')
-      setSavedMessage('Profile changes saved.')
+      
+      setSavedMessage('Profile and preferences saved successfully!')
     } catch (err: any) {
       setError(err?.message || 'Unable to save profile.')
     } finally {
@@ -124,12 +215,13 @@ const Profile: React.FC = () => {
     <PageWrapper>
       <MainContent>
         <Heading level={1}>Profile</Heading>
-        <Text as="p" className="mb-1">Update your profile details below.</Text>
+        <Text as="p" className="mb-1">Update your profile details and event preferences below. All fields are required.</Text>
 
-        {loading ? <Text as="p">Loading profile...</Text> : null}
+        {loading || loadingCategories ? <Text as="p">Loading profile...</Text> : null}
         {error ? <Text as="p" className="error-text">{error}</Text> : null}
+        {categoryError ? <Text as="p" className="error-text">{categoryError}</Text> : null}
 
-        <section className="profile-section" aria-busy={loading}>
+        <section className="profile-section" aria-busy={loading || loadingCategories}>
           <Heading level={2} className="section-title">Profile Details</Heading>
           <Card className="card card--elevated section-card mt-2 profile-card">
 
@@ -307,17 +399,132 @@ const Profile: React.FC = () => {
               </div>
             </div>
 
-            <div className="profile-actions">
-              {savedMessage ? <Text as="p" className="status-active">{savedMessage}</Text> : <span />}
-              <Button
-                className="btn--small profile-save-btn"
-                onClick={handleSave}
-                disabled={saving || loading}
-              >
-                {saving ? 'Saving...' : 'Save'}
-              </Button>
-            </div>
+          </Card>
+        </section>
 
+        <section className="profile-section">
+          <Heading level={2} className="section-title">Event Preferences</Heading>
+          <Card className="card card--elevated section-card mt-2">
+            <div className="form-stack">
+              <div>
+                <Text as="p" className="mb-1">What kinds of events interest you most? *</Text>
+                <div className="profile-choice-grid">
+                  {interestOptions.map((interest) => {
+                    const selected = interests.includes(interest.id)
+
+                    return (
+                      <button
+                        key={String(interest.id)}
+                        type="button"
+                        className={selected ? 'profile-choice profile-choice--active' : 'profile-choice'}
+                        aria-pressed={selected}
+                        onClick={() => toggleInterest(interest.id)}
+                      >
+                        {interest.name}
+                      </button>
+                    )
+                  })}
+                </div>
+                <Text as="p" className="profile-helper">Choose as many as apply.</Text>
+              </div>
+
+              <div>
+                <Text as="p" className="mb-1">When do you usually want events? *</Text>
+                <div className="profile-choice-groups">
+                  {eventTimeOptions.map((section) => (
+                    <div key={section.group} className="profile-choice-group">
+                      <Text as="p" className="profile-choice-group-title">{section.group}</Text>
+                      <div className="profile-choice-stack">
+                        {section.options.map((option) => {
+                          const selected = eventTimes.includes(option.id)
+
+                          return (
+                            <button
+                              key={option.id}
+                              type="button"
+                              className={selected ? 'profile-choice profile-choice--active' : 'profile-choice'}
+                              aria-pressed={selected}
+                              onClick={() => toggleEventTime(option.id)}
+                            >
+                              {option.label}
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <Text as="p" className="profile-helper">Choose as many as apply.</Text>
+              </div>
+
+              <div>
+                <label className="input-label" htmlFor="event-size">What size events do you prefer? *</label>
+                <div className="profile-range-control">
+                  <input
+                    id="event-size"
+                    className="profile-range"
+                    style={{ '--range-progress': `${((eventSize - 1) / (eventSizeLabels.length - 1)) * 100}%` } as React.CSSProperties}
+                    type="range"
+                    min="1"
+                    max={eventSizeLabels.length}
+                    step="1"
+                    value={eventSize}
+                    onChange={(e) => setEventSize(Number(e.target.value))}
+                  />
+                  <div className="profile-range-labels" aria-hidden="true">
+                    {eventSizeLabels.map((label) => (
+                      <span key={label}>{label}</span>
+                    ))}
+                  </div>
+                </div>
+                <Text as="p" className="profile-helper">Selected: {eventSizeLabels[eventSize - 1]}</Text>
+              </div>
+
+              <div>
+                <label className="input-label" htmlFor="travel-distance-trigger">How far are you willing to travel? *</label>
+                <div className="profile-dropdown" onClick={(e) => e.stopPropagation()}>
+                  <button
+                    id="travel-distance-trigger"
+                    type="button"
+                    className="profile-dropdown-trigger"
+                    aria-haspopup="listbox"
+                    aria-expanded={openMenu === 'travelDistance'}
+                    onClick={() => setOpenMenu((current) => current === 'travelDistance' ? null : 'travelDistance')}
+                  >
+                    {travelDistance}
+                  </button>
+                  {openMenu === 'travelDistance' ? (
+                    <div className="profile-dropdown-menu" role="listbox" aria-labelledby="travel-distance-trigger">
+                      {travelDistanceOptions.map((option) => (
+                        <button
+                          key={option}
+                          type="button"
+                          className={travelDistance === option ? 'profile-dropdown-option profile-dropdown-option--active' : 'profile-dropdown-option'}
+                          onClick={() => {
+                            setTravelDistance(option)
+                            setOpenMenu(null)
+                          }}
+                        >
+                          {option}
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+
+              <div className="profile-actions">
+                {savedMessage ? <Text as="p" className="status-active">{savedMessage}</Text> : <span />}
+                <Button
+                  className="btn--small profile-save-btn"
+                  onClick={handleSave}
+                  disabled={saving || loading || loadingCategories}
+                >
+                  {saving ? 'Saving...' : 'Save Profile & Preferences'}
+                </Button>
+              </div>
+              {preferenceMessage ? <Text as="p" className="status-active">{preferenceMessage}</Text> : null}
+            </div>
           </Card>
         </section>
       </MainContent>
