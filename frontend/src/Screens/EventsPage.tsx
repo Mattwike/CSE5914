@@ -149,7 +149,7 @@ const EventsPage: React.FC = () => {
     return [...preferredOnTop, ...others]
   }
 
-  // Compute category sections (max 4 per category) and remaining events (deduped)
+  // Compute category sections (max 8 per category) and remaining events (deduped)
   const { categorySections, remainingEvents } = useMemo(() => {
     // Diagnostic: log event counts and sample ids to ensure we have data to group
     // eslint-disable-next-line no-console
@@ -200,7 +200,7 @@ const EventsPage: React.FC = () => {
 
       for (const cat of preferredList) {
         const bucket = resolveBucket(cat)
-        const slice = bucket.slice(0, 4)
+        const slice = bucket.slice(0, 8)
         for (const e of slice) selectedIds.add(e.id)
         sections.push({ title: String(cat.name), events: slice })
         // record canonical key for this preference (if possible) so later
@@ -260,9 +260,54 @@ const EventsPage: React.FC = () => {
 
           <EventFilters search={search} setSearch={(s) => { setSearch(s); setPage(1) }} location={location} setLocation={(l) => { setLocation(l); setPage(1) }} locations={locations} />
 
+          {/* Layout: optional sidebar of preferred categories (page 1 only) + main column */}
+          <div className="events-with-sidebar">
+            <div className="events-main">
+              {page === 1 && categorySections.length > 0 ? (
+                <aside className="events-sidebar" aria-label="Categories">
+                  <nav>
+                      <Heading level={3}>Categories</Heading>
+                      <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                        {user ? (
+                          <li key="my-events-link" style={{ marginBottom: '8px' }}>
+                            <a href="#my-events" onClick={(ev) => {
+                              ev.preventDefault()
+                              const el = document.getElementById('my-events')
+                              if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                            }}>My Events</a>
+                          </li>
+                        ) : null}
+
+                        {categorySections.map((sec) => {
+                          const anchor = String(sec.title).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+/g, '-').replace(/^-+|-+$/g, '')
+                          return (
+                            <li key={anchor} style={{ marginBottom: '8px' }}>
+                              <a href={`#${anchor}`} onClick={(ev) => {
+                                ev.preventDefault()
+                                const el = document.getElementById(anchor)
+                                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                              }}>{sec.title}</a>
+                            </li>
+                          )
+                        })}
+
+                        <li key="all-events-link" style={{ marginBottom: '8px' }}>
+                          <a href="#all-events" onClick={(ev) => {
+                            ev.preventDefault()
+                            const el = document.getElementById('all-events')
+                            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                          }}>All Events</a>
+                        </li>
+                      </ul>
+                    </nav>
+                </aside>
+              ) : null}
+
+              <div className="events-content">
+
           {user && page === 1 && (
             <section>
-              <Heading level={2}>My Events</Heading>
+              <Heading level={2} id="my-events">My Events</Heading>
               {!myEventsLoading && myEvents.length === 0 && (
                 <Text as="p">You haven't created any events yet.</Text>
               )}
@@ -274,25 +319,33 @@ const EventsPage: React.FC = () => {
           {loadingCategories ? (
             <Text as="p">Loading personalized sections...</Text>
           ) : null}
-          {page === 1 && categorySections.map((sec) => (
-            <section key={sec.title}>
-              <Heading level={2}>{sec.title}</Heading>
-              <EventGrid events={sec.events} onEventClick={handleEventClick} />
-            </section>
-          ))}
+          {page === 1 && categorySections.map((sec) => {
+            const anchor = String(sec.title).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+/g, '-').replace(/^-+|-+$/g, '')
+            return (
+              <section id={anchor} key={sec.title}>
+                <Heading level={2}>{sec.title}</Heading>
+                <EventGrid events={sec.events} onEventClick={handleEventClick} />
+              </section>
+            )
+          })}
 
           {/* Final All Events section: remaining events not already shown */}
-          <Heading level={2} style={{ marginTop: 'var(--space-xl)' }}>All Events</Heading>
-          <EventGrid events={eventsToShowInAll} loading={loading} onEventClick={handleEventClick} />
+          <div id="all-events" style={{ marginTop: 'var(--space-xl)' }}>
+            <Heading level={2}>All Events</Heading>
+            <EventGrid events={eventsToShowInAll} loading={loading} onEventClick={handleEventClick} />
 
-          {/* Pagination controls for All Events */}
-          {totalPages > 1 && (
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center', justifyContent: 'center', marginTop: 'var(--space-md)' }}>
-              <Button disabled={page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>Previous</Button>
-              <Text as="p">Page {page} of {totalPages}</Text>
-              <Button disabled={page >= totalPages} onClick={() => setPage((p) => Math.min(totalPages, p + 1))}>Next</Button>
-            </div>
-          )}
+            {/* Pagination controls for All Events */}
+            {totalPages > 1 && (
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', justifyContent: 'center', marginTop: 'var(--space-md)' }}>
+                <Button disabled={page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>Previous</Button>
+                <Text as="p">Page {page} of {totalPages}</Text>
+                <Button disabled={page >= totalPages} onClick={() => setPage((p) => Math.min(totalPages, p + 1))}>Next</Button>
+              </div>
+            )}
+          </div>
+        </div>
+        </div>
+        </div>
         </div>
       </MainContent>
     </PageWrapper>
