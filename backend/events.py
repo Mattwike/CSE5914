@@ -272,10 +272,15 @@ async def list_events(current_user: dict = Depends(get_current_user)):
 
     user_id = current_user["user_id"] if current_user else None
 
+    ohio_offset = timedelta(hours=-4)
+    now_utc = datetime.now(timezone.utc)
+    now_ohio = now_utc + ohio_offset
+    now_query = now_ohio.isoformat()
+
     try:
         with engine.connect() as connection:
-            r1 = connection.execute(q1, {'current_user_id': user_id}).mappings().fetchall()
-            r2 = connection.execute(q2, {'current_user_id': user_id}).mappings().fetchall()
+            r1 = connection.execute(q1, {'current_user_id': user_id, 'now_query': now_query}).mappings().fetchall()
+            r2 = connection.execute(q2, {'current_user_id': user_id, 'now_query': now_query}).mappings().fetchall()
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database error: {str(e)}")
 
@@ -295,7 +300,18 @@ async def list_events(current_user: dict = Depends(get_current_user)):
             'location': location,
             'description': r.get('description'),
             'thumbnail': r.get('image_url'),
+            '_raw_date': r.get('start_time')
         })
+
+    def sort_key(x):
+        if not x['_raw_date']:
+            return now_ohio.replace(year=2999) 
+        return x['_raw_date']
+
+    items.sort(key=sort_key)
+
+    for item in items:
+        del item['_raw_date']
 
     return items
 

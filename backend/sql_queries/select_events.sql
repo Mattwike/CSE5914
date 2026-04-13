@@ -18,8 +18,8 @@ FROM events e
 LEFT JOIN follows f
     ON f.following_id = e.created_by
     AND f.follower_id = :current_user_id
-WHERE e.start_time IS NULL OR e.start_time >= NOW()
+WHERE start_time IS NULL OR start_time >= :now_query
 ORDER BY
     CASE WHEN f.follower_id IS NOT NULL THEN 0 ELSE 1 END,
     e.start_time NULLS LAST
-LIMIT 100;
+LIMIT 200;
