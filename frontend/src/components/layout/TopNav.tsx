@@ -52,11 +52,7 @@ const TopNav: React.FC = () => {
                 >Groups</NavLink>
               </li>
               <li>
-                <NavLink
-                  to="/chat"
-                  onClick={(e) => { if (disabled) e.preventDefault() }}
-                  className={({isActive}) => `${isActive ? 'active' : ''} ${disabled ? 'disabled' : ''}`.trim()}
-                >Chat</NavLink>
+                {/* Chat link removed — chat is now on the dashboard */}
               </li>
               <li>
                 <NavLink
