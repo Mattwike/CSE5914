@@ -299,19 +299,15 @@ async def list_events(current_user: dict = Depends(get_current_user)):
             'date': _iso_str(r.get('start_time')),
             'location': location,
             'description': r.get('description'),
-            'thumbnail': r.get('image_url'),
-            '_raw_date': r.get('start_time')
+            'thumbnail': r.get('image_url')
         })
 
     def sort_key(x):
-        if not x['_raw_date']:
-            return now_ohio.replace(year=2999) 
-        return x['_raw_date']
+        if not x['date']:
+            return "9999-12-31T00:00:00"
+        return x['date']
 
     items.sort(key=sort_key)
-
-    for item in items:
-        del item['_raw_date']
 
     return items
 
