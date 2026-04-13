@@ -15,6 +15,6 @@ SELECT
     source_url,
     website_url
 FROM event_options
-WHERE start_time IS NULL OR start_time >= :now_query
+WHERE start_time IS NULL OR start_time >= :now_query OR is_recurring = true
 ORDER BY start_time NULLS LAST
 LIMIT 200;
