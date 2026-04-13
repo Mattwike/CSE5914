@@ -1,10 +1,11 @@
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { PageWrapper, MainContent } from '../components/layout'
 import { Card, Heading, Input, Button, Text } from '../components/ui'
 import { request } from '../services/api'
 import { supabase } from '../services/supabase'
 import { addGroupEvent } from '../services/groups'
+import * as eventsService from '../services/events'
 
 const CreateEvent: React.FC = () => {
   const [title, setTitle] = useState('')
@@ -21,11 +22,51 @@ const CreateEvent: React.FC = () => {
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [initialLoading, setInitialLoading] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const groupId = searchParams.get('groupId')
+  const editEventId = searchParams.get('editEventId')
+
+  // Load event data if editing
+  useEffect(() => {
+    if (editEventId) {
+      const loadEventData = async () => {
+        setInitialLoading(true)
+        try {
+          const eventData = await eventsService.getEventById(editEventId)
+          if (eventData) {
+            setIsEditing(true)
+            setTitle(eventData.title || '')
+            setDescription(eventData.description || '')
+            setLocationName(eventData.location || '')
+            setLocationAddress(eventData.location || '')
+            setCapacity(eventData.capacity || '')
+            setFee(eventData.fee || '')
+            setPhotoPreview(eventData.thumbnail || null)
+
+            // Parse dates - backend returns ISO strings
+            if (eventData.date) {
+              const date = new Date(eventData.date)
+              setStartTime(date.toISOString().slice(0, 16))
+            }
+            if (eventData.closeDate) {
+              const closeDate = new Date(eventData.closeDate)
+              setCloseDate(closeDate.toISOString().split('T')[0])
+            }
+          }
+        } catch (err: any) {
+          setError(err.message || 'Failed to load event data.')
+        } finally {
+          setInitialLoading(false)
+        }
+      }
+      loadEventData()
+    }
+  }, [editEventId])
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null
@@ -97,21 +138,34 @@ const CreateEvent: React.FC = () => {
       body.fee = fee !== '' ? fee : 0
       if (imageUrl) body.image_url = imageUrl
 
-      const result = await request('/events/create', {
-        method: 'POST',
-        body,
-      })
+      let result
+      if (isEditing && editEventId) {
+        // Update existing event
+        result = await eventsService.modifyEvent(editEventId, body)
+        setMessage('Event updated successfully!')
+      } else {
+        // Create new event
+        result = await request('/events/create', {
+          method: 'POST',
+          body,
+        })
 
-      // If creating from a group, auto-link the event to that group
-      if (groupId && result?.event_id) {
-        await addGroupEvent(groupId, result.event_id)
+        // If creating from a group, auto-link the event to that group
+        if (groupId && result?.event_id) {
+          await addGroupEvent(groupId, result.event_id)
+        }
+
+        setMessage('Event created successfully!')
       }
 
-      setMessage('Event created successfully!')
-      const redirectTo = groupId ? `/groups/${groupId}` : '/events'
+      const redirectTo = isEditing 
+        ? `/events/${editEventId}`
+        : groupId 
+        ? `/groups/${groupId}` 
+        : '/events'
       setTimeout(() => navigate(redirectTo), 1500)
     } catch (err: any) {
-      setError(err.message || 'Failed to create event.')
+      setError(err.message || 'Failed to save event.')
     } finally {
       setLoading(false)
     }
@@ -120,16 +174,21 @@ const CreateEvent: React.FC = () => {
   return (
     <PageWrapper>
       <MainContent>
-        <Heading level={1}>{groupId ? 'Create Group Event' : 'Create Event'}</Heading>
-        {groupId && (
+        <Heading level={1}>{isEditing ? 'Edit Event' : groupId ? 'Create Group Event' : 'Create Event'}</Heading>
+        {groupId && !isEditing && (
           <Text as="p" style={{ color: 'var(--color-text-muted)', marginBottom: 'var(--space-sm)' }}>
             This event will be linked to your group.
           </Text>
         )}
 
-        <Card className="card section-card mt-2">
-          <div className="form-stack">
-            <Input label="Event Title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Event Title" />
+        {initialLoading ? (
+          <Card className="card section-card mt-2">
+            <Heading level={2}>Loading event...</Heading>
+          </Card>
+        ) : (
+          <Card className="card section-card mt-2">
+            <div className="form-stack">
+              <Input label="Event Title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Event Title" />
 
             <div>
               <label className="input-label" htmlFor="description">Description</label>
@@ -204,13 +263,14 @@ const CreateEvent: React.FC = () => {
 
             <div className="section-actions">
               <Button variant="ghost" onClick={() => navigate(-1)}>Back</Button>
-              <Button onClick={handleCreate} disabled={loading}>{loading ? 'Creating...' : 'Create Event'}</Button>
+              <Button onClick={handleCreate} disabled={loading || initialLoading}>{loading ? (isEditing ? 'Updating...' : 'Creating...') : (isEditing ? 'Update Event' : 'Create Event')}</Button>
             </div>
 
             {error ? <Text as="p" className="status-error">{error}</Text> : null}
             {message ? <Text as="p" className="status-active">{message}</Text> : null}
           </div>
         </Card>
+        )}
       </MainContent>
     </PageWrapper>
   )
