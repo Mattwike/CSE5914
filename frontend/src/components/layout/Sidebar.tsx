@@ -20,7 +20,6 @@ const Sidebar: React.FC<SidebarProps> = ({ children, className = '' }) => {
             <li><NavLink to="/dashboard" className={({isActive}) => isActive ? 'active' : ''}>Home</NavLink></li>
             <li><NavLink to="/events" className={({isActive}) => isActive ? 'active' : ''}>Events</NavLink></li>
             <li><NavLink to="/profile" className={({isActive}) => isActive ? 'active' : ''}>Profile</NavLink></li>
-            <li><NavLink to="/settings" className={({isActive}) => isActive ? 'active' : ''}>Settings</NavLink></li>
           </ul>
         </nav>
       )}
