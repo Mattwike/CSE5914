@@ -215,6 +215,7 @@ async def get_event(event_id: str, current_user: Optional[dict] = Depends(get_op
         'currentCapacity': row.get('current_capacity'),
         'closeDate': _iso_str(row.get('close_date')),
         'isAttending': is_attending,
+        'category': row.get('category'),  # Added category to the event object
     }
 
 @router.delete("/{event_id}")
@@ -252,6 +253,7 @@ async def get_user_events(user_id: str, current_user: dict = Depends(get_current
             'location': location,
             'description': r.get('description'),
             'thumbnail': r.get('image_url'),
+            'category': r.get('category') if 'category' in r.keys() else None,  # Added category to the event object
         })
 
     return items
@@ -298,6 +300,7 @@ async def list_events(current_user: dict = Depends(get_current_user)):
             'title': r.get('title'),
             'date': _iso_str(r.get('start_time')),
             'location': location,
+            'category': r.get('category') if 'category' in r.keys() else None,
             'description': r.get('description'),
             'thumbnail': r.get('image_url')
         })

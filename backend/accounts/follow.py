@@ -39,6 +39,11 @@ async def get_public_profile(username: str):
 
     return {
         'bio': row.get('bio'),
+        'major': row.get('major'),
+        'graduation_year': row.get('graduation_year'),
+        'has_car': row.get('has_car'),
+        'verified': row.get('verified'),
+        'interests': row.get('interests') or [],
     }
 
 
