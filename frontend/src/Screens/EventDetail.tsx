@@ -94,7 +94,7 @@ const EventDetail: React.FC = () => {
       return <Button onClick={handleLeave} disabled={rsvpLoading}>{rsvpLoading ? 'Leaving...' : 'Leave Event'}</Button>
     }
     if (isFull) {
-      return <Button disabled>Event Full</Button>
+      return <Button disabled>Event is Full</Button>
     }
     return <Button onClick={handleJoin} disabled={rsvpLoading}>{rsvpLoading ? 'Joining...' : 'Join Event'}</Button>
   }
