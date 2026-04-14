@@ -12,13 +12,11 @@ import { getCategories } from '../services/events'
 import { getCategoryPreferences } from '../services/preferences'
 import { mapCategory } from '../utils/categoryMap'
 
-const PAGE_SIZE = 10
-
 const EventsPage: React.FC = () => {
   const [search, setSearch] = useState('')
   const [location, setLocation] = useState('')
   const [page, setPage] = useState(1)
-  const { events, loading } = useEvents()
+  const { events } = useEvents()
 
   const { user } = useAuthContext()
   const [myEvents, setMyEvents] = useState<EventItem[]>([])
@@ -61,7 +59,6 @@ const EventsPage: React.FC = () => {
     })
   }, [search, location, events])
 
-  // --- New: load categories and user preference ids to prioritize categories ---
   const [categories, setCategories] = useState<Array<{ id: string | number; name: string }>>([])
   const [preferredCategoryIds, setPreferredCategoryIds] = useState<Array<string | number>>([])
   const [loadingCategories, setLoadingCategories] = useState(false)
@@ -99,8 +96,6 @@ const EventsPage: React.FC = () => {
 
   const handleEventClick = (id: string) => navigate(`/events/${id}`)
 
-  // Helper: group events by mapped canonical category name
-  // track unmapped raw category values for quick debugging
   const unmappedRawCategories = new Set<string>()
 
   const groupByCanonicalCategory = (items: EventItem[]) => {
@@ -128,8 +123,7 @@ const EventsPage: React.FC = () => {
       if (!map[key]) map[key] = []
       map[key].push(ev)
     }
-    // Debug: show which canonical buckets were created
-    // eslint-disable-next-line no-console
+
     console.info('EventsPage: grouped bucket keys:', Object.keys(map))
     // Debug: if Goodale Park event present, show its mapping
     const probeId = '43963d6e-96fe-4b6a-a495-a683d332db31'
@@ -149,8 +143,7 @@ const EventsPage: React.FC = () => {
     return [...preferredOnTop, ...others]
   }
 
-  // Compute category sections (max 8 per category) and remaining events (deduped)
-  const { categorySections, remainingEvents } = useMemo(() => {
+  const { categorySections } = useMemo(() => {
     // Diagnostic: log event counts and sample ids to ensure we have data to group
     // eslint-disable-next-line no-console
     console.info('EventsPage: diagnostics', { totalEvents: (events || []).length, filteredCount: (filtered || []).length, sampleFilteredIds: (filtered || []).slice(0, 10).map(e => e.id) })
@@ -161,7 +154,7 @@ const EventsPage: React.FC = () => {
     const prioritized = prioritizeCategories(categories, preferredCategoryIds)
 
     const selectedIds = new Set<string>()
-    const sections: Array<{ title: string; events: EventItem[] }> = []
+    const sections: Array<{ title: string; events: EventItem[]; totalCount: number }> = []
     // track canonical keys for sections we've added so we don't accidentally
     // suppress grouped buckets that match a preferred category via mapping
     const sectionKeysAdded = new Set<string>()
@@ -200,9 +193,9 @@ const EventsPage: React.FC = () => {
 
       for (const cat of preferredList) {
         const bucket = resolveBucket(cat)
-        const slice = bucket.slice(0, 8)
+        const slice = bucket.slice(0, 4)
         for (const e of slice) selectedIds.add(e.id)
-        sections.push({ title: String(cat.name), events: slice })
+        sections.push({ title: String(cat.name), events: slice, totalCount: bucket.length })
         // record canonical key for this preference (if possible) so later
         // we can skip adding duplicate sections from grouped buckets
         const canonical = mapCategory(String(cat.name)) || normalizeDisplayName(String(cat.name))
@@ -212,10 +205,6 @@ const EventsPage: React.FC = () => {
     } else {
       // No preferences selected: do not show category sections. All events will be shown in 'All Events'
     }
-
-    // NOTE: we intentionally do NOT create additional category sections
-    // beyond the user's selected preferences. Any events not included in
-    // preference sections will appear in the final "All Events" list.
 
     // Exclude my events and already selected events from remaining list
     const myEventIds = new Set(myEvents.map((m) => m.id))
@@ -230,21 +219,6 @@ const EventsPage: React.FC = () => {
 
     return { categorySections: sections, remainingEvents: remaining }
   }, [filtered, categories, preferredCategoryIds, myEvents])
-
-  // compute pagination based on remainingEvents (not including category sections)
-  const totalPages = useMemo(() => Math.max(1, Math.ceil((categorySections?.length ? remainingEvents.length : filtered.length) / PAGE_SIZE)), [remainingEvents, filtered, categorySections])
-
-  // determine which events to show in the All Events section for current page
-  const eventsToShowInAll = useMemo(() => {
-    // If there are category sections and we're on page 1, show the first PAGE_SIZE of remainingEvents
-    if (categorySections.length > 0) {
-      const start = (page - 1) * PAGE_SIZE
-      return remainingEvents.slice(start, start + PAGE_SIZE)
-    }
-    // No categories: paginate over filtered (all events)
-    const start = (page - 1) * PAGE_SIZE
-    return filtered.slice(start, start + PAGE_SIZE)
-  }, [page, remainingEvents, filtered, categorySections])
 
   return (
     <PageWrapper>
@@ -290,14 +264,6 @@ const EventsPage: React.FC = () => {
                             </li>
                           )
                         })}
-
-                        <li key="all-events-link" style={{ marginBottom: '8px' }}>
-                          <a href="#all-events" onClick={(ev) => {
-                            ev.preventDefault()
-                            const el = document.getElementById('all-events')
-                            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                          }}>All Events</a>
-                        </li>
                       </ul>
                     </nav>
                 </aside>
@@ -319,30 +285,32 @@ const EventsPage: React.FC = () => {
           {loadingCategories ? (
             <Text as="p">Loading personalized sections...</Text>
           ) : null}
-          {page === 1 && categorySections.map((sec) => {
+          {page === 1 && categorySections.map((sec: any) => {
             const anchor = String(sec.title).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+/g, '-').replace(/^-+|-+$/g, '')
+            const hasMore = sec.totalCount > sec.events.length
             return (
-              <section id={anchor} key={sec.title}>
-                <Heading level={2}>{sec.title}</Heading>
+              <section id={anchor} key={sec.title} style={{ marginBottom: '48px' }}>
+                <Heading level={2} style={{ marginBottom: '20px' }}>{sec.title}</Heading>
                 <EventGrid events={sec.events} onEventClick={handleEventClick} />
+                {hasMore && (
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '20px' }}>
+                    <Button onClick={() => navigate(`/events/all?category=${encodeURIComponent(sec.title)}`)}>
+                      View More
+                    </Button>
+                  </div>
+                )}
               </section>
             )
           })}
 
-          {/* Final All Events section: remaining events not already shown */}
-          <div id="all-events" style={{ marginTop: 'var(--space-xl)' }}>
-            <Heading level={2}>All Events</Heading>
-            <EventGrid events={eventsToShowInAll} loading={loading} onEventClick={handleEventClick} />
-
-            {/* Pagination controls for All Events */}
-            {totalPages > 1 && (
-              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', justifyContent: 'center', marginTop: 'var(--space-md)' }}>
-                <Button disabled={page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>Previous</Button>
-                <Text as="p">Page {page} of {totalPages}</Text>
-                <Button disabled={page >= totalPages} onClick={() => setPage((p) => Math.min(totalPages, p + 1))}>Next</Button>
-              </div>
-            )}
-          </div>
+          {/* View All Events Button */}
+          {categorySections.length > 0 && (
+            <div style={{ display: 'flex', justifyContent: 'center', marginTop: '32px', marginBottom: '32px' }}>
+              <Button onClick={() => navigate('/events/all')}>
+                View All Events
+              </Button>
+            </div>
+          )}
         </div>
         </div>
         </div>

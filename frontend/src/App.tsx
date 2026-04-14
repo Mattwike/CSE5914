@@ -5,6 +5,7 @@ import CreateAccount from "./Screens/CreateAccount";
 import Verify from './Screens/Verify';
 import Dashboard from "./Screens/Dashboard";
 import EventsPage from "./Screens/EventsPage";
+import AllEventsPage from "./Screens/AllEventsPage";
 import CreateEvent from './Screens/CreateEvent'
 import GroupsPage from "./Screens/GroupsPage";
 import CreateGroup from './Screens/CreateGroup'
@@ -32,6 +33,7 @@ function AppRoutes() {
         <Route path="/verify" element={<Verify />} />
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
         <Route path="/events" element={<ProtectedRoute><EventsPage /></ProtectedRoute>} />
+        <Route path="/events/all" element={<ProtectedRoute><AllEventsPage /></ProtectedRoute>} />
         <Route path="/events/create" element={<ProtectedRoute><CreateEvent /></ProtectedRoute>} />
         <Route path="/events/:id" element={<ProtectedRoute><EventDetail /></ProtectedRoute>} />
         <Route path="/groups" element={<ProtectedRoute><GroupsPage /></ProtectedRoute>} />
