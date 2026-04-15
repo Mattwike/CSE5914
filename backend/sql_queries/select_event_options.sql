@@ -15,6 +15,7 @@ SELECT
     source_url,
     website_url
 FROM event_options
-WHERE start_time IS NULL OR start_time >= NOW()
+-- Include events with no start_time, future start_time, or recurring events
+WHERE start_time IS NULL OR start_time >= NOW() OR is_recurring = true
 ORDER BY start_time NULLS LAST
 LIMIT 100;

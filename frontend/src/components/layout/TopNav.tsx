@@ -51,26 +51,17 @@ const TopNav: React.FC = () => {
                   className={({isActive}) => `${isActive ? 'active' : ''} ${disabled ? 'disabled' : ''}`.trim()}
                 >Groups</NavLink>
               </li>
+              {/*
               <li>
-                <NavLink
-                  to="/chat"
-                  onClick={(e) => { if (disabled) e.preventDefault() }}
-                  className={({isActive}) => `${isActive ? 'active' : ''} ${disabled ? 'disabled' : ''}`.trim()}
-                >Chat</NavLink>
+                <NavLink ...>Chat</NavLink>
               </li>
+              */}
               <li>
                 <NavLink
                   to="/profile"
                   onClick={(e) => { if (disabled) e.preventDefault() }}
                   className={({isActive}) => `${isActive ? 'active' : ''} ${disabled ? 'disabled' : ''}`.trim()}
                 >Profile</NavLink>
-              </li>
-              <li>
-                <NavLink
-                  to="/settings"
-                  onClick={(e) => { if (disabled) e.preventDefault() }}
-                  className={({isActive}) => `${isActive ? 'active' : ''} ${disabled ? 'disabled' : ''}`.trim()}
-                >Settings</NavLink>
               </li>
             </ul>
           </div>

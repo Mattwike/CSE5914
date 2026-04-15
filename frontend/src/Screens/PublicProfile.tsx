@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { PageWrapper, MainContent } from '../components/layout'
-import { Heading, Text, Card } from '../components/ui'
+import { Heading, Text, Card, Button, LazyImage } from '../components/ui'
 
 const PublicProfile: React.FC = () => {
   const { username } = useParams()
@@ -24,7 +24,13 @@ const PublicProfile: React.FC = () => {
           request(`/follow/${encodeURIComponent(username)}/isFollowing`).catch(() => ({ following: false }))
         ])
         if (!mounted) return
-        setUserData(data)
+        // Normalize response: ensure interests is an array
+        try { console.debug('publicProfile response:', data) } catch {}
+        const normalized = { ...data }
+        if (normalized && normalized.interests && typeof normalized.interests === 'string') {
+          try { normalized.interests = JSON.parse(normalized.interests) } catch { normalized.interests = [] }
+        }
+        setUserData(normalized)
         setFollowing(followData.following)
       } catch (e: any) {
         if (mounted) setError(e?.message || 'Failed to load user')
@@ -66,46 +72,59 @@ const PublicProfile: React.FC = () => {
             <Text as="div">{error}</Text>
           </div>
         ) : userData ? (
-          <>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <Heading level={1}>{username}</Heading>
-              <button
-                onClick={handleFollow}
-                disabled={followLoading}
-                style={{
-                  padding: '6px 16px',
-                  borderRadius: '6px',
-                  border: 'none',
-                  background: following ? '#888' : '#3b82f6',
-                  color: '#fff',
-                  cursor: followLoading ? 'default' : 'pointer',
-                  fontWeight: 600,
-                  fontSize: '0.9rem'
-                }}
-              >
-                {followLoading ? '…' : following ? 'Following' : 'Follow'}
-              </button>
+          <div className="detail-card detail-card--centered">
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <LazyImage src={userData.avatar || '/block.jpg'} alt={username || 'profile'} width={96} height={96} className="detail-avatar" />
+                <div>
+                  <Heading level={1}>{username}</Heading>
+                  <Text as="p" style={{ color: 'var(--muted)' }}>
+                    {userData.major ? userData.major : ''}{(userData.major && (userData.graduation_year || userData.graduationYear)) ? ' • ' : ''}{userData.graduation_year ?? userData.graduationYear ?? ''}
+                  </Text>
+                </div>
+              </div>
+
+              <div>
+                <Button onClick={handleFollow} disabled={followLoading} className={following ? 'btn--secondary' : ''}>
+                  {followLoading ? '…' : following ? 'Following' : 'Follow'}
+                </Button>
+              </div>
             </div>
+
             <Card className="card card--elevated mt-2">
-              <div style={{ padding: '12px' }}>
+              <div style={{ padding: 12 }}>
                 <Heading level={2} className="section-title">Bio</Heading>
-                <Text as="p">{userData.bio}</Text>
+                <Text as="p">{userData.bio || 'No bio provided.'}</Text>
 
                 <Heading level={2} className="section-title" style={{ marginTop: 12 }}>Interests</Heading>
                 {userData.interests && userData.interests.length ? (
-                  <ul>
-                    {userData.interests.map((it: string) => <li key={it}>{it}</li>)}
-                  </ul>
+                  <Text as="p">{(userData.interests || []).join(', ')}</Text>
                 ) : (
                   <Text as="p">No public interests listed.</Text>
                 )}
+
+                <div style={{ marginTop: 12, display: 'flex', gap: 16 }}>
+                  <Text as="p" style={{ color: 'var(--muted)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <strong>Verified:</strong>
+                    <span aria-hidden style={{ color: userData.verified ? 'var(--ok, #16a34a)' : 'var(--error, #dc2626)' }}>
+                      {userData.verified ? '✔' : '✖'}
+                    </span>
+                  </Text>
+
+                  <Text as="p" style={{ color: 'var(--muted)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <strong>Has car:</strong>
+                    <span aria-hidden style={{ color: userData.has_car ? 'var(--ok, #16a34a)' : 'var(--error, #dc2626)' }}>
+                      {userData.has_car ? '✔' : '✖'}
+                    </span>
+                  </Text>
+                </div>
 
                 <Text as="p" style={{ marginTop: 12, color: 'var(--muted)' }}>
                   Public profile — not editable.
                 </Text>
               </div>
             </Card>
-          </>
+          </div>
         ) : (
           <Heading level={2}>User not found</Heading>
         )}

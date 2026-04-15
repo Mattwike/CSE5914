@@ -30,7 +30,10 @@ async def get_categories():
         query = sql_helper.load_query("sql_queries/get_categories.sql")
         with engine.connect() as connection:
             result = connection.execute(query)
-            categories = [row["name"] for row in result.mappings().all()]
+            categories = [
+                {"id": row["id"], "name": row["name"]}
+                for row in result.mappings().all()
+            ]
     except Exception:
         return JSONResponse(
             status_code=500,
@@ -296,6 +299,7 @@ async def get_event(event_id: str, current_user: Optional[dict] = Depends(get_op
         'currentCapacity': event_option_attendee_count if event_option_attendee_count is not None else row.get('current_capacity'),
         'closeDate': _iso_str(row.get('close_date')),
         'isAttending': is_attending,
+        'category': row.get('category'),  # Added category to the event object
     }
 
 @router.delete("/{event_id}")
@@ -333,6 +337,7 @@ async def get_user_events(user_id: str, current_user: dict = Depends(get_current
             'location': location,
             'description': r.get('description'),
             'thumbnail': r.get('image_url'),
+            'category': r.get('category') if 'category' in r.keys() else None,  # Added category to the event object
         })
 
     return items
@@ -374,6 +379,7 @@ async def list_events(current_user: dict = Depends(get_current_user)):
             'title': r.get('title'),
             'date': _iso_str(r.get('start_time')),
             'location': location,
+            'category': r.get('category') if 'category' in r.keys() else None,
             'description': r.get('description'),
             'thumbnail': r.get('image_url'),
         })
@@ -381,8 +387,47 @@ async def list_events(current_user: dict = Depends(get_current_user)):
     return items
 
 @router.post("/{event_id}/modify")
-async def change_time(eventID: str, userID: str, new_start_time: str, new_end_time: str, new_location: str, current_user: dict = Depends(get_current_user)):
-    pass
+async def modify_event(event_id: str, event: EventCreate, current_user: dict = Depends(get_current_user)):
+    sql_helper = SQLHelper()
+    try:
+        query = sql_helper.load_query("sql_queries/update_event.sql")
+    except Exception:
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={"message": "Failed to load query"}
+        )
+
+    try:
+        with engine.connect() as connection:
+            result = connection.execute(query, {
+                'event_id': event_id,
+                'user_id': current_user["user_id"],
+                'title': event.title,
+                'description': event.description,
+                'location_name': event.location_name,
+                'location_address': event.location_address,
+                'start_time': event.start_time,
+                'end_time': event.end_time,
+                'image_url': event.image_url,
+                'capacity': event.capacity,
+                'close_date': event.close_date,
+                'fee': event.fee,
+            })
+            row = result.mappings().fetchone()
+            connection.commit()
+    except Exception as e:
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={"message": f"Database error: {str(e)}"}
+        )
+
+    if not row:
+        return JSONResponse(
+            status_code=status.HTTP_403_FORBIDDEN,
+            content={"message": "You are not authorized to modify this event"}
+        )
+
+    return {"message": "Event updated successfully", "event_id": str(row['id'])}
 
 @router.get("/{user_id}/eventOptions")
 async def get_event_options(user_id: str):

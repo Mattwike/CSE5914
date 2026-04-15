@@ -80,7 +80,12 @@ const EventDetail: React.FC = () => {
     if (!event) return null
 
     if (isCreator) {
-      return <Button disabled>Your Event</Button>
+      return (
+        <>
+          <Button onClick={() => navigate(`/events/create?editEventId=${event.id}`)}>Edit Event</Button>
+          <Button disabled>Your Event</Button>
+        </>
+      )
     }
     if (isClosed) {
       return <Button disabled>Registration Closed</Button>
@@ -89,7 +94,7 @@ const EventDetail: React.FC = () => {
       return <Button onClick={handleLeave} disabled={rsvpLoading}>{rsvpLoading ? 'Leaving...' : 'Leave Event'}</Button>
     }
     if (isFull) {
-      return <Button disabled>Event Full</Button>
+      return <Button disabled>Event is Full</Button>
     }
     return <Button onClick={handleJoin} disabled={rsvpLoading}>{rsvpLoading ? 'Joining...' : 'Join Event'}</Button>
   }

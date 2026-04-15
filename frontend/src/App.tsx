@@ -5,12 +5,12 @@ import CreateAccount from "./Screens/CreateAccount";
 import Verify from './Screens/Verify';
 import Dashboard from "./Screens/Dashboard";
 import EventsPage from "./Screens/EventsPage";
+import AllEventsPage from "./Screens/AllEventsPage";
 import CreateEvent from './Screens/CreateEvent'
 import GroupsPage from "./Screens/GroupsPage";
 import CreateGroup from './Screens/CreateGroup'
 import Profile from "./Screens/Profile";
 import PublicProfile from "./Screens/PublicProfile";
-import Settings from "./Screens/Settings";
 import Chat from './Screens/Chat'
 import EventDetail from './Screens/EventDetail'
 import GroupDetail from './Screens/GroupDetail'
@@ -33,6 +33,7 @@ function AppRoutes() {
         <Route path="/verify" element={<Verify />} />
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
         <Route path="/events" element={<ProtectedRoute><EventsPage /></ProtectedRoute>} />
+        <Route path="/events/all" element={<ProtectedRoute><AllEventsPage /></ProtectedRoute>} />
         <Route path="/events/create" element={<ProtectedRoute><CreateEvent /></ProtectedRoute>} />
         <Route path="/events/:id" element={<ProtectedRoute><EventDetail /></ProtectedRoute>} />
         <Route path="/groups" element={<ProtectedRoute><GroupsPage /></ProtectedRoute>} />
@@ -40,7 +41,6 @@ function AppRoutes() {
         <Route path="/groups/:id" element={<ProtectedRoute><GroupDetail /></ProtectedRoute>} />
         <Route path="/profile/:username" element={<PublicProfile />} />
         <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-        <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
         <Route path="/chat" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
       </Routes>
     </>
