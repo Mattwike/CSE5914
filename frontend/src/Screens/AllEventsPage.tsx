@@ -1,13 +1,10 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { PageWrapper, MainContent } from '../components/layout'
 import { EventGrid, EventFilters, EventHero } from '../components/events'
 import { Button, Heading, Text } from '../components/ui'
-import { useAuthContext } from '../context/AuthContext'
-import { request } from '../services/api'
 import '../styles/events.css'
 import useEvents from '../hooks/useEvents'
-import type { EventItem } from '../services/events'
 import { mapCategory } from '../utils/categoryMap'
 
 const PAGE_SIZE = 12
@@ -18,7 +15,6 @@ const AllEventsPage: React.FC = () => {
   const [page, setPage] = useState(1)
   const { events, loading } = useEvents()
   const navigate = useNavigate()
-  const { user } = useAuthContext()
   const [searchParams] = useSearchParams()
   const categoryParam = searchParams.get('category')
 
