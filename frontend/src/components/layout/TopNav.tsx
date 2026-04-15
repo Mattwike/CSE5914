@@ -51,9 +51,11 @@ const TopNav: React.FC = () => {
                   className={({isActive}) => `${isActive ? 'active' : ''} ${disabled ? 'disabled' : ''}`.trim()}
                 >Groups</NavLink>
               </li>
+              {/*
               <li>
-                {/* Chat link removed — chat is now on the dashboard */}
+                <NavLink ...>Chat</NavLink>
               </li>
+              */}
               <li>
                 <NavLink
                   to="/profile"
