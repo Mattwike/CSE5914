@@ -1,7 +1,6 @@
-import React, { useMemo, useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button, Card, Heading, Text, LazyImage } from "../components/ui";
-import { EventCard } from '../components/events'
 import { GroupCard } from '../components/groups'
 import '../styles/dashboard.css'
 import '../styles/chat.css'
@@ -108,18 +107,6 @@ const Dashboard: React.FC = () => {
       setLoading(false)
     }
   }
-
-  const featuredEvent = useMemo(() => {
-    if (events && events.length > 0) {
-      return events[Math.floor(Math.random() * events.length)]
-    }
-    return sampleEvents[0]
-  }, [events])
-
-  // const handleLogout = () => {
-  //   alert("Logged out!");
-  //   navigate("/login");
-  // };
 
   return (
     <PageWrapper>
