@@ -22,6 +22,12 @@ engine = create_engine(database_url, pool_pre_ping=True)
 
 router = APIRouter(prefix="/events", tags=["events"])
 
+def _get_event_type(connection, sql_helper: SQLHelper, event_id: str):
+    query = sql_helper.load_query("sql_queries/get_event_type.sql")
+    result = connection.execute(query, {'event_id': event_id})
+    row = result.mappings().fetchone()
+    return row["event_type"] if row else None
+
 @router.get("/categories")
 async def get_categories():
     sql_helper = SQLHelper()
@@ -106,52 +112,106 @@ async def create(event: EventCreate, current_user: dict = Depends(get_current_us
 async def join_event(event_id: str, current_user: dict = Depends(get_current_user)):
     sql_helper = SQLHelper()
     try:
-        query = sql_helper.load_query("sql_queries/join_event.sql")
         with engine.connect() as connection:
-            result = connection.execute(query, {
-                'event_id': event_id,
-                'user_id': current_user["user_id"],
-            })
-            row = result.mappings().fetchone()
+            event_type = _get_event_type(connection, sql_helper, event_id)
+
+            if event_type == "event_options":
+                join_query = sql_helper.load_query("sql_queries/join_event_option.sql")
+                count_query = sql_helper.load_query("sql_queries/get_event_option_attendee_count.sql")
+
+                result = connection.execute(join_query, {
+                    'event_id': event_id,
+                    'user_id': current_user["user_id"],
+                })
+                row = result.mappings().fetchone()
+                count_row = connection.execute(count_query, {
+                    'event_id': event_id,
+                }).mappings().fetchone()
+            elif event_type == "events":
+                join_query = sql_helper.load_query("sql_queries/join_event.sql")
+                result = connection.execute(join_query, {
+                    'event_id': event_id,
+                    'user_id': current_user["user_id"],
+                })
+                row = result.mappings().fetchone()
+                count_row = row
+            else:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Event not found")
+
             connection.commit()
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database error: {str(e)}")
 
     if not row:
+        if event_type == "event_options":
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="You already joined this event")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot join: event is full, registration is closed, or you already joined")
 
-    return {"message": "Joined", "currentCapacity": row["current_capacity"]}
+    return {"message": "Joined", "currentCapacity": count_row["current_capacity"]}
 
 
 @router.post("/{event_id}/leave")
 async def leave_event(event_id: str, current_user: dict = Depends(get_current_user)):
     sql_helper = SQLHelper()
     try:
-        query = sql_helper.load_query("sql_queries/leave_event.sql")
         with engine.connect() as connection:
-            result = connection.execute(query, {
-                'event_id': event_id,
-                'user_id': current_user["user_id"],
-            })
-            row = result.mappings().fetchone()
+            event_type = _get_event_type(connection, sql_helper, event_id)
+
+            if event_type == "event_options":
+                leave_query = sql_helper.load_query("sql_queries/leave_event_option.sql")
+                count_query = sql_helper.load_query("sql_queries/get_event_option_attendee_count.sql")
+
+                result = connection.execute(leave_query, {
+                    'event_id': event_id,
+                    'user_id': current_user["user_id"],
+                })
+                row = result.mappings().fetchone()
+                count_row = connection.execute(count_query, {
+                    'event_id': event_id,
+                }).mappings().fetchone()
+            elif event_type == "events":
+                leave_query = sql_helper.load_query("sql_queries/leave_event.sql")
+                result = connection.execute(leave_query, {
+                    'event_id': event_id,
+                    'user_id': current_user["user_id"],
+                })
+                row = result.mappings().fetchone()
+                count_row = row
+            else:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Event not found")
+
             connection.commit()
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database error: {str(e)}")
 
     if not row:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Not currently attending this event")
 
-    return {"message": "Left", "currentCapacity": row["current_capacity"]}
+    return {"message": "Left", "currentCapacity": count_row["current_capacity"]}
 
 
 @router.get("/{event_id}/attendees")
 async def get_attendees(event_id: str):
     sql_helper = SQLHelper()
     try:
-        query = sql_helper.load_query("sql_queries/get_event_attendees.sql")
         with engine.connect() as connection:
+            event_type = _get_event_type(connection, sql_helper, event_id)
+
+            if event_type == "event_options":
+                query = sql_helper.load_query("sql_queries/get_event_option_attendees.sql")
+            elif event_type == "events":
+                query = sql_helper.load_query("sql_queries/get_event_attendees.sql")
+            else:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Event not found")
+
             result = connection.execute(query, {'event_id': event_id})
             rows = result.mappings().fetchall()
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database error: {str(e)}")
 
@@ -180,12 +240,24 @@ async def get_event(event_id: str, current_user: Optional[dict] = Depends(get_op
 
             is_attending = False
             if row and current_user:
-                att_query = sql_helper.load_query("sql_queries/check_attendance.sql")
+                if row.get('external_id') is not None:
+                    att_query = sql_helper.load_query("sql_queries/check_event_option_attendance.sql")
+                else:
+                    att_query = sql_helper.load_query("sql_queries/check_attendance.sql")
                 att_result = connection.execute(att_query, {
                     'event_id': event_id,
                     'user_id': current_user["user_id"],
                 })
                 is_attending = att_result.fetchone() is not None
+
+            current_capacity = row.get('current_capacity') if row else None
+            if row and row.get('external_id') is not None:
+                count_query = sql_helper.load_query("sql_queries/get_event_option_attendee_count.sql")
+                count_result = connection.execute(count_query, {'event_id': event_id})
+                count_row = count_result.mappings().fetchone()
+                current_capacity = count_row.get('current_capacity', 0) if count_row else 0
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database error: {str(e)}")
 
@@ -212,7 +284,7 @@ async def get_event(event_id: str, current_user: Optional[dict] = Depends(get_op
         'createdBy': row.get('display_name'),
         'createdById': str(row.get('created_by')) if row.get('created_by') else None,
         'capacity': row.get('capacity'),
-        'currentCapacity': row.get('current_capacity'),
+        'currentCapacity': current_capacity,
         'closeDate': _iso_str(row.get('close_date')),
         'isAttending': is_attending,
         'category': row.get('category'),  # Added category to the event object
