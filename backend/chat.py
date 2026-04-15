@@ -160,7 +160,7 @@ Do NOT use any Markdown formatting whatsoever (no asterisks, no bold text, no it
 Title
 Date and Time
 Description
-Link in this format https://cse-5914.vercel.app/events/{{id}}
+Link: https://cse-5914.vercel.app/events/{{id}}
 
 (Leave exactly one blank line between different events).
 
