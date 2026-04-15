@@ -1,7 +1,6 @@
-import React, { useMemo, useState, useRef, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useRef, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Button, Card, Heading, Text, LazyImage } from "../components/ui";
-import { EventCard } from '../components/events'
 import { GroupCard } from '../components/groups'
 import '../styles/dashboard.css'
 import '../styles/chat.css'
@@ -9,6 +8,15 @@ import { PageWrapper, MainContent } from "../components/layout";
 import useEvents from '../hooks/useEvents'
 import { request } from '../services/api'
 import { useAuthContext } from '../context/AuthContext'
+
+interface RecommendedEvent {
+  id: string;
+  title: string;
+  description: string;
+  location: string;
+  start_time: string;
+  is_free: boolean;
+}
 
 const sampleEvents = [
   { id: 'e1', title: 'Campus Study Group', date: new Date().toISOString(), location: 'The Union', description: 'Quick study meet to prep for exams.', thumbnail: '/block.jpg' },
@@ -24,8 +32,13 @@ type Message = { id: string; role: 'user' | 'assistant' | 'system'; text: string
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { events } = useEvents()
   const { user } = useAuthContext()
+
+  // Featured events state
+  const [featuredEvents, setFeaturedEvents] = useState<RecommendedEvent[]>([])
+  const [featuredLoading, setFeaturedLoading] = useState(false)
 
   // Chat state (inlined from Chat.tsx)
   const [messages, setMessages] = useState<Message[]>([
@@ -35,6 +48,28 @@ const Dashboard: React.FC = () => {
   const [loading, setLoading] = useState(false)
   const [selectedEvent, setSelectedEvent] = useState<string | ''>('')
   const listRef = useRef<HTMLDivElement | null>(null)
+
+  // Fetch featured events
+  const fetchFeaturedEvents = async () => {
+    if (!user?.user_id) return;
+    
+    setFeaturedLoading(true);
+    try {
+      const data = await request(`/chat/top-recommendations/${user.user_id}`);
+      setFeaturedEvents(data?.recommendations || []);
+    } catch (err) {
+      console.error("Failed to fetch featured events:", err);
+      setFeaturedEvents([]);
+    } finally {
+      setFeaturedLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (user?.user_id) {
+      fetchFeaturedEvents();
+    }
+  }, [user, location])
 
   useEffect(() => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: 'smooth' })
@@ -72,18 +107,6 @@ const Dashboard: React.FC = () => {
       setLoading(false)
     }
   }
-
-  const featuredEvent = useMemo(() => {
-    if (events && events.length > 0) {
-      return events[Math.floor(Math.random() * events.length)]
-    }
-    return sampleEvents[0]
-  }, [events])
-
-  // const handleLogout = () => {
-  //   alert("Logged out!");
-  //   navigate("/login");
-  // };
 
   return (
     <PageWrapper>
@@ -154,14 +177,48 @@ const Dashboard: React.FC = () => {
 
           {/* Featured Section */}
           <section className="dashboard-feature-grid">
-            <Card className="card section-card">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Heading level={3}>Featured Events</Heading>
-                <Button onClick={() => navigate('/events')}>View All</Button>
-              </div>
-              <div style={{ marginTop: 'var(--space-md)' }} className="dashboard-preview">
-                <EventCard event={featuredEvent as any} onView={(id: string) => navigate(`/events/${id}`)} />
-              </div>
+            <Card className="card section-card" style={{ gridColumn: '1 / -1' }}>
+              <Heading level={2} style={{ marginBottom: '24px' }}>Featured Events Just For You</Heading>
+
+              {featuredEvents.length === 0 && !featuredLoading ? (
+                <Text as="p" style={{ color: '#666' }}>No recommendations available yet.</Text>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px' }}>
+                  {featuredEvents.map((event) => (
+                    <div
+                      key={event.id}
+                      style={{
+                        padding: '16px',
+                        border: '1px solid #e0e0e0',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        transition: 'box-shadow 0.2s',
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)'}
+                      onMouseLeave={(e) => e.currentTarget.style.boxShadow = 'none'}
+                      onClick={() => navigate(`/events/${event.id}`)}
+                    >
+                      <Heading level={3} style={{ marginBottom: '8px', fontSize: '1.1em' }}>{event.title}</Heading>
+                      <Text as="p" style={{ color: '#666', marginBottom: '8px', fontSize: '0.9em' }}>
+                        {event.start_time}
+                      </Text>
+                      <Text as="p" style={{ color: '#666', marginBottom: '8px', fontSize: '0.9em' }}>
+                        📍 {event.location}
+                      </Text>
+                      <Text as="p" style={{ color: '#666', marginBottom: '12px', fontSize: '0.85em' }}>
+                        {event.description?.substring(0, 80)}...
+                      </Text>
+                      <Text as="p" style={{ 
+                        fontWeight: 'bold', 
+                        color: event.is_free ? '#4caf50' : '#ff9800',
+                        fontSize: '0.9em'
+                      }}>
+                        {event.is_free ? "Free" : "Paid"}
+                      </Text>
+                    </div>
+                  ))}
+                </div>
+              )}
             </Card>
 
             <Card className="card section-card">
