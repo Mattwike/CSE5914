@@ -12,7 +12,7 @@ database_url = (
     f"postgresql+psycopg2://{os.getenv('DB_USER')}:{os.getenv('PASSWORD')}"
     f"@{os.getenv('HOST')}:{os.getenv('PORT')}/{os.getenv('DB_NAME')}?sslmode=require"
 )
-engine = create_engine(database_url, pool_pre_ping=True)
+engine = create_engine(database_url, pool_pre_ping=True, connect_args={"options": "-c statement_timeout=30000"}, execution_options={"no_parameters": True}, pool_size=20, max_overflow=0)
 
 router = APIRouter(prefix="/preferences", tags=["preferences"])
 
