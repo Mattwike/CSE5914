@@ -13,7 +13,7 @@ db_name = os.getenv("DB_NAME")
 
 DATABASE_URL = f"postgresql://{user}:{password}@{host}:{port}/{db_name}?sslmode=require"
 
-engine = create_engine(DATABASE_URL)
+engine = create_engine(DATABASE_URL, pool_pre_ping=True, connect_args={"options": "-c statement_timeout=30000"}, execution_options={"no_parameters": True}, pool_size=20, max_overflow=0)
 
 db_helper = SQLHelper()
 router = APIRouter(prefix="/recommendations", tags=["recommendations"])
