@@ -456,7 +456,7 @@ const GroupDetail: React.FC = () => {
                                   : m.role === 'admin'
                                     ? 'var(--color-text-muted)'
                                     : 'var(--color-border)',
-                                color: m.role === 'owner' || m.role === 'admin' ? '#fff' : 'var(--color-text)',
+                                color: m.role === 'owner' || m.role === 'admin' ? '#fff' : '#000',
                               }}
                             >
                               {m.role}
