@@ -242,6 +242,7 @@
   top: calc(var(--space-lg) + 56px);
   left: 0;
   align-self: flex-start;
+  float: left;
   z-index: 40;
   max-height: calc(100vh - (var(--space-lg) + 80px));
   overflow: auto;

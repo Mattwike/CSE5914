@@ -266,13 +266,22 @@ const EventsPage: React.FC = () => {
                       <Heading level={3}>Categories</Heading>
                       <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
                         {user ? (
-                          <li key="my-events-link" style={{ marginBottom: '8px' }}>
-                            <a href="#my-events" onClick={(ev) => {
-                              ev.preventDefault()
-                              const el = document.getElementById('my-events')
-                              if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                            }}>My Events</a>
-                          </li>
+                          <>
+                            <li key="created-events-link" style={{ marginBottom: '8px' }}>
+                              <a href="#created-events" onClick={(ev) => {
+                                ev.preventDefault()
+                                const el = document.getElementById('created-events')
+                                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                              }}>Created Events</a>
+                            </li>
+                            <li key="joined-events-link" style={{ marginBottom: '8px' }}>
+                              <a href="#joined-events" onClick={(ev) => {
+                                ev.preventDefault()
+                                const el = document.getElementById('joined-events')
+                                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                              }}>Joined Events</a>
+                            </li>
+                          </>
                         ) : null}
 
                         {categorySections.map((sec) => {
@@ -295,16 +304,16 @@ const EventsPage: React.FC = () => {
               <div className="events-content">
 
           {user && page === 1 && (
-            <section>
+            <section style={{ marginBottom: '48px' }}>
               <Heading level={2} id="my-events">My Events</Heading>
 
-              <Heading level={3}>Created Events</Heading>
+              <Heading level={3} id="created-events">Created Events</Heading>
               {!myEventsLoading && myEvents.length === 0 && (
                 <Text as="p">You haven't created any events yet.</Text>
               )}
               <EventGrid events={myEvents} loading={myEventsLoading} onEventClick={handleEventClick} />
 
-              <Heading level={3} style={{ marginTop: 'var(--space-lg)' }}>Joined Events</Heading>
+              <Heading level={3} id="joined-events" style={{ marginTop: 'var(--space-lg)' }}>Joined Events</Heading>
               {!joinedEventsLoading && joinedEvents.length === 0 && (
                 <Text as="p">You haven't joined any events yet.</Text>
               )}
