@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button, Card, Heading, Text, LazyImage } from "../components/ui";
 import { GroupCard } from '../components/groups'
+import ReactMarkdown from 'react-markdown';
 import '../styles/dashboard.css'
 import '../styles/chat.css'
 import { PageWrapper, MainContent } from "../components/layout";
@@ -124,7 +125,12 @@ const Dashboard: React.FC = () => {
                   <div className="chat-messages" ref={listRef} aria-live="polite">
                     {messages.map((m) => (
                       <div key={m.id} className={`message ${m.role === 'user' ? 'message-user' : 'message-ai'}`}>
-                        <div className="message-bubble">{m.text}</div>
+                        <div
+                          className="message-bubble"
+                          style={{ overflowWrap: 'break-word', wordBreak: 'break-word' }}
+                        >
+                          <ReactMarkdown>{m.text}</ReactMarkdown>
+                        </div>
                       </div>
                     ))}
                   </div>
