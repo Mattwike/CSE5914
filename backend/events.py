@@ -304,7 +304,23 @@ async def get_event(event_id: str, current_user: Optional[dict] = Depends(get_op
 
 @router.delete("/{event_id}")
 async def delete_event(event_id: str, current_user: dict = Depends(get_current_user)):
-    pass
+    sql_helper = SQLHelper()
+    try:
+        query = sql_helper.load_query("sql_queries/delete_event.sql")
+        with engine.connect() as connection:
+            result = connection.execute(query, {
+                'event_id': event_id,
+                'user_id': current_user["user_id"],
+            })
+            row = result.mappings().fetchone()
+            connection.commit()
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database error: {str(e)}")
+
+    if not row:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Event not found or you are not the creator")
+
+    return {"message": "Event deleted"}
 
 @router.get("/{user_id}/event")
 async def get_user_events(user_id: str, current_user: dict = Depends(get_current_user)):

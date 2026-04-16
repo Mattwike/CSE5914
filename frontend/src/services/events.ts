@@ -61,3 +61,7 @@ export async function leaveEvent(eventId: string) {
 export async function getAttendees(eventId: string) {
   return request(`/events/${encodeURIComponent(eventId)}/attendees`)
 }
+
+export async function deleteEvent(eventId: string) {
+  return request(`/events/${encodeURIComponent(eventId)}`, { method: 'DELETE' })
+}

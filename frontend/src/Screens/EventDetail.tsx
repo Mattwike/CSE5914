@@ -76,6 +76,20 @@ const EventDetail: React.FC = () => {
     }
   }
 
+  const handleDelete = async () => {
+    if (!id) return
+    if (!window.confirm('Are you sure you want to delete this event? This cannot be undone.')) return
+    setRsvpLoading(true)
+    try {
+      await eventsService.deleteEvent(id)
+      navigate('/events')
+    } catch (e: any) {
+      console.error('Failed to delete event', e)
+    } finally {
+      setRsvpLoading(false)
+    }
+  }
+
   const renderRsvpButton = () => {
     if (!event) return null
 
@@ -83,7 +97,7 @@ const EventDetail: React.FC = () => {
       return (
         <>
           <Button onClick={() => navigate(`/events/create?editEventId=${event.id}`)}>Edit Event</Button>
-          <Button disabled>Your Event</Button>
+          <Button onClick={handleDelete} disabled={rsvpLoading}>{rsvpLoading ? 'Deleting...' : 'Delete Event'}</Button>
         </>
       )
     }
