@@ -35,6 +35,9 @@ const GroupDetail: React.FC = () => {
   const [eventSearch, setEventSearch] = useState('')
   const [eventsLoading, setEventsLoading] = useState(false)
 
+  // Joined events tracking
+  const [joinedEventIds, setJoinedEventIds] = useState<Set<string>>(new Set())
+
   // Kick confirmation
   const [kickConfirmId, setKickConfirmId] = useState<string | null>(null)
 
@@ -76,6 +79,23 @@ const GroupDetail: React.FC = () => {
     loadGroup().then(() => { if (!mounted) return })
     return () => { mounted = false }
   }, [loadGroup])
+
+  useEffect(() => {
+    if (!user?.user_id) return
+    let mounted = true
+    async function loadJoined() {
+      try {
+        const data = await request('/events/joined')
+        if (mounted) {
+          setJoinedEventIds(new Set((data || []).map((e: any) => e.id)))
+        }
+      } catch {
+        if (mounted) setJoinedEventIds(new Set())
+      }
+    }
+    loadJoined()
+    return () => { mounted = false }
+  }, [user])
 
   // --- Actions ---
 
@@ -521,7 +541,11 @@ const GroupDetail: React.FC = () => {
                       <div
                         key={e.id}
                         className="card"
-                        style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 'var(--space-sm) var(--space-md)', cursor: 'pointer' }}
+                        style={{
+                          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                          padding: 'var(--space-sm) var(--space-md)', cursor: 'pointer',
+                          border: joinedEventIds.has(e.id) ? '2px solid var(--color-success, #107C10)' : undefined,
+                        }}
                         onClick={() => navigate(`/events/${e.id}`)}
                       >
                         <div>
