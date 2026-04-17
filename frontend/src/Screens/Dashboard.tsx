@@ -253,10 +253,7 @@ const Dashboard: React.FC = () => {
             </Card>
 
             <Card className="card section-card" style={{ gridColumn: '1 / -1' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                <Heading level={2}>Featured Groups</Heading>
-                <Button onClick={() => navigate('/groups')}>View All</Button>
-              </div>
+              <Heading level={2} style={{ marginBottom: '24px' }}>Featured Groups</Heading>
 
               {featuredGroups.length === 0 && !featuredGroupsLoading ? (
                 <Text as="p" style={{ color: '#666' }}>No groups available yet.</Text>
