@@ -1,13 +1,13 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button, Card, Heading, Text, LazyImage } from "../components/ui";
-import { GroupCard } from '../components/groups'
 import ReactMarkdown from 'react-markdown';
 import '../styles/dashboard.css'
 import '../styles/chat.css'
 import { PageWrapper, MainContent } from "../components/layout";
 import useEvents from '../hooks/useEvents'
 import { request } from '../services/api'
+import { featuredGroups as fetchFeaturedGroupsApi } from '../services/groups'
 import { useAuthContext } from '../context/AuthContext'
 
 interface RecommendedEvent {
@@ -19,14 +19,18 @@ interface RecommendedEvent {
   is_free: boolean;
 }
 
+interface FeaturedGroup {
+  id: string;
+  name: string;
+  description: string | null;
+  member_count: number;
+  join_policy: 'open' | 'approval';
+  image_url: string | null;
+}
+
 const sampleEvents = [
   { id: 'e1', title: 'Campus Study Group', date: new Date().toISOString(), location: 'The Union', description: 'Quick study meet to prep for exams.', thumbnail: '/block.jpg' },
   { id: 'e2', title: 'Hackathon Info Session', date: new Date().toISOString(), location: 'STEM Hall', description: 'Intro to the upcoming hackathon.', thumbnail: '/block.jpg' }
-]
-
-const sampleGroups = [
-  { id: 'g1', name: 'Robotics Club', members: 42, location: 'Engineering', description: 'Building robots and competing in challenges.', thumbnail: '/block.jpg' },
-  { id: 'g2', name: 'Art Society', members: 18, location: 'Fine Arts', description: 'Weekly sketching sessions and workshops.', thumbnail: '/block.jpg' }
 ]
 
 type Message = { id: string; role: 'user' | 'assistant' | 'system'; text: string }
@@ -40,6 +44,10 @@ const Dashboard: React.FC = () => {
   // Featured events state
   const [featuredEvents, setFeaturedEvents] = useState<RecommendedEvent[]>([])
   const [featuredLoading, setFeaturedLoading] = useState(false)
+
+  // Featured groups state
+  const [featuredGroups, setFeaturedGroups] = useState<FeaturedGroup[]>([])
+  const [featuredGroupsLoading, setFeaturedGroupsLoading] = useState(false)
 
   // Chat state (inlined from Chat.tsx)
   const [messages, setMessages] = useState<Message[]>([
@@ -71,6 +79,23 @@ const Dashboard: React.FC = () => {
       fetchFeaturedEvents();
     }
   }, [user, location])
+
+  const fetchFeaturedGroups = async () => {
+    setFeaturedGroupsLoading(true);
+    try {
+      const data = await fetchFeaturedGroupsApi(3);
+      setFeaturedGroups(data?.groups ?? []);
+    } catch (err) {
+      console.error("Failed to fetch featured groups:", err);
+      setFeaturedGroups([]);
+    } finally {
+      setFeaturedGroupsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchFeaturedGroups();
+  }, [])
 
   useEffect(() => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: 'smooth' })
@@ -227,14 +252,48 @@ const Dashboard: React.FC = () => {
               )}
             </Card>
 
-            <Card className="card section-card">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Heading level={3}>Featured Groups</Heading>
+            <Card className="card section-card" style={{ gridColumn: '1 / -1' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                <Heading level={2}>Featured Groups</Heading>
                 <Button onClick={() => navigate('/groups')}>View All</Button>
               </div>
-              <div style={{ marginTop: 'var(--space-md)' }} className="dashboard-preview">
-                <GroupCard group={sampleGroups[0]} onView={(id: string) => navigate(`/groups/${id}`)} />
-              </div>
+
+              {featuredGroups.length === 0 && !featuredGroupsLoading ? (
+                <Text as="p" style={{ color: '#666' }}>No groups available yet.</Text>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px' }}>
+                  {featuredGroups.map((group) => (
+                    <div
+                      key={group.id}
+                      style={{
+                        padding: '16px',
+                        border: '1px solid #e0e0e0',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        transition: 'box-shadow 0.2s',
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)'}
+                      onMouseLeave={(e) => e.currentTarget.style.boxShadow = 'none'}
+                      onClick={() => navigate(`/groups/${group.id}`)}
+                    >
+                      <Heading level={3} style={{ marginBottom: '8px', fontSize: '1.1em' }}>{group.name}</Heading>
+                      <Text as="p" style={{ color: '#666', marginBottom: '8px', fontSize: '0.9em' }}>
+                        👥 {group.member_count} {group.member_count === 1 ? 'member' : 'members'}
+                      </Text>
+                      <Text as="p" style={{ color: '#666', marginBottom: '12px', fontSize: '0.85em' }}>
+                        {(group.description || 'No description.').substring(0, 80)}{(group.description?.length ?? 0) > 80 ? '…' : ''}
+                      </Text>
+                      <Text as="p" style={{
+                        fontWeight: 'bold',
+                        color: group.join_policy === 'open' ? '#4caf50' : '#ff9800',
+                        fontSize: '0.9em'
+                      }}>
+                        {group.join_policy === 'open' ? 'Open to join' : 'Request to join'}
+                      </Text>
+                    </div>
+                  ))}
+                </div>
+              )}
             </Card>
           </section>
         </MainContent>

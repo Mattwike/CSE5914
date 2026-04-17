@@ -91,6 +91,18 @@ async def list_groups(
     return {"groups": rows}
 
 
+@router.get("/featured")
+async def featured_groups(
+    limit: int = Query(3, ge=1, le=12),
+    current_user: dict = Depends(get_current_user),
+):
+    query = sql.load_query("sql_queries/groups/featured_groups.sql")
+    with engine.connect() as connection:
+        result = connection.execute(query, {"lim": limit})
+        rows = [dict(r) for r in result.mappings().fetchall()]
+    return {"groups": rows}
+
+
 @router.get("/{group_id}")
 async def get_group(group_id: str, current_user: dict = Depends(get_current_user)):
     query = sql.load_query("sql_queries/groups/get_group.sql")
