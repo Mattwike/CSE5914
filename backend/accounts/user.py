@@ -61,8 +61,9 @@ async def create_account(data: Data, background_tasks: BackgroundTasks):
     crypto_manager = CryptoManager()
     sql_helper = SQLHelper()
     encrypted_password = crypto_manager.hash_data(data.password.encode())
-    email = data.email
-    if not email.endswith("@osu.edu") or email.endswith("@buckeyemail.osu.edu"):
+    email = data.email.strip().lower()
+
+    if not (email.endswith("@osu.edu") or email.endswith("@buckeyemail.osu.edu")):
         return {"message": "Invalid email domain. Please use an osu.edu email."}
     
     try:
@@ -171,8 +172,9 @@ async def verify_token(token: str, user_email: str):
 @router.post("/resend_verification_email")
 async def send_verification_email(data: Data, background_tasks: BackgroundTasks):
     crypto_manager = CryptoManager()
-    email = data.email
-    if not (email.endswith("@osu.edu") or email.endswith("@buckeyemail.osu.edu")):
+    email = email.strip().lower()
+
+    if not (email.endswith("@osu.edu")):
         return {"message": "Invalid email domain. Please use an osu.edu email."}
 
     token = crypto_manager.generate_key(length=64)
