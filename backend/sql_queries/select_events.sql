@@ -3,7 +3,7 @@ SELECT
     NULL::text AS external_id,
     e.title,
     e.description,
-    NULL::text AS category,
+    e.category,
     e.location_name,
     e.location_address,
     NULL::double precision AS latitude,
@@ -11,7 +11,7 @@ SELECT
     e.start_time,
     e.end_time,
     e.image_url,
-    e.source,
+    'user_created'::text AS source,
     NULL::text AS source_url,
     NULL::text AS website_url
 FROM events e
