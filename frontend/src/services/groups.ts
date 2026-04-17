@@ -57,6 +57,10 @@ export async function listGroups(params?: { q?: string; limit?: number; offset?:
   return request(`/groups${qs ? `?${qs}` : ''}`)
 }
 
+export async function featuredGroups(limit: number = 3) {
+  return request(`/groups/featured?limit=${limit}`)
+}
+
 export async function myGroups() {
   return request('/groups/my')
 }
