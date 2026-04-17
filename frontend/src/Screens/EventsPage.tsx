@@ -23,10 +23,13 @@ const EventsPage: React.FC = () => {
   const [myEventsLoading, setMyEventsLoading] = useState(false)
   const [joinedEvents, setJoinedEvents] = useState<EventItem[]>([])
   const [joinedEventsLoading, setJoinedEventsLoading] = useState(false)
+  const [followingEvents, setFollowingEvents] = useState<EventItem[]>([])
+  const [followingEventsLoading, setFollowingEventsLoading] = useState(false)
 
   useEffect(() => {
     if (!user?.user_id) return
     let mounted = true
+
     async function loadMyEvents() {
       setMyEventsLoading(true)
       try {
@@ -39,6 +42,7 @@ const EventsPage: React.FC = () => {
             location: e.location || '',
             description: e.description || '',
             thumbnail: e.thumbnail || '',
+            category: e.category || '',
           })))
         }
       } catch {
@@ -47,6 +51,29 @@ const EventsPage: React.FC = () => {
         if (mounted) setMyEventsLoading(false)
       }
     }
+
+    async function loadFollowingEvents() {
+      setFollowingEventsLoading(true)
+      try {
+        const data = await request('/events/following')
+        if (mounted) {
+          setFollowingEvents((data || []).map((e: any) => ({
+            id: e.id,
+            title: e.title,
+            date: e.date || '',
+            location: e.location || '',
+            description: e.description || '',
+            thumbnail: e.thumbnail || '',
+            category: e.category || '',
+          })))
+        }
+      } catch {
+        if (mounted) setFollowingEvents([])
+      } finally {
+        if (mounted) setFollowingEventsLoading(false)
+      }
+    }
+
     async function loadJoinedEvents() {
       setJoinedEventsLoading(true)
       try {
@@ -59,6 +86,7 @@ const EventsPage: React.FC = () => {
             location: e.location || '',
             description: e.description || '',
             thumbnail: e.thumbnail || '',
+            category: e.category || '',
           })))
         }
       } catch {
@@ -67,12 +95,16 @@ const EventsPage: React.FC = () => {
         if (mounted) setJoinedEventsLoading(false)
       }
     }
+
     loadMyEvents()
+    loadFollowingEvents()
     loadJoinedEvents()
-    return () => { mounted = false }
+
+    return () => {
+      mounted = false
+    }
   }, [user])
 
-  // Filter logic lives in page (not in EventGrid)
   const filtered = useMemo(() => {
     const s = search.trim().toLowerCase()
     return (events || []).filter((e) => {
@@ -88,6 +120,7 @@ const EventsPage: React.FC = () => {
 
   useEffect(() => {
     let mounted = true
+
     async function load() {
       if (!user?.user_id) return
       setLoadingCategories(true)
@@ -99,7 +132,7 @@ const EventsPage: React.FC = () => {
         if (!mounted) return
         setCategories(catsRes?.categories || [])
         setPreferredCategoryIds(prefsRes?.category_ids || [])
-      } catch (err) {
+      } catch {
         if (!mounted) return
         setCategories([])
         setPreferredCategoryIds([])
@@ -107,13 +140,17 @@ const EventsPage: React.FC = () => {
         if (mounted) setLoadingCategories(false)
       }
     }
+
     load()
-    return () => { mounted = false }
+    return () => {
+      mounted = false
+    }
   }, [user])
 
-  // totalPages will be computed based on remaining events (after category sections)
-
-  const locations = useMemo(() => Array.from(new Set((events || []).map((e) => e.location).filter(Boolean) as string[])), [events])
+  const locations = useMemo(
+    () => Array.from(new Set((events || []).map((e) => e.location).filter(Boolean) as string[])),
+    [events]
+  )
 
   const navigate = useNavigate()
 
@@ -124,42 +161,46 @@ const EventsPage: React.FC = () => {
   const groupByCanonicalCategory = (items: EventItem[]) => {
     const map: Record<string, EventItem[]> = {}
     const ungrouped: EventItem[] = []
+
     for (const ev of items) {
-      // map raw category to canonical preference category; mapCategory may return null for unknowns
       const raw = (ev as any).category
       const cat = mapCategory(raw)
-      // log mapping for debugging — help trace why specific events aren't ending up in sections
-      // eslint-disable-next-line no-console
+
       console.info('EventsPage: map event->category', { id: ev.id, rawCategory: raw, mapped: cat })
+
       if (!cat) {
         ungrouped.push(ev)
-        // log unseen raw categories once to console for mapping updates
         if (raw && !unmappedRawCategories.has(String(raw))) {
           unmappedRawCategories.add(String(raw))
-          // lightweight debug output
-          // eslint-disable-next-line no-console
           console.info('EventsPage: unmapped raw category:', raw)
         }
         continue
       }
+
       const key = String(cat).toLowerCase()
       if (!map[key]) map[key] = []
       map[key].push(ev)
     }
 
     console.info('EventsPage: grouped bucket keys:', Object.keys(map))
-    // Debug: if Goodale Park event present, show its mapping
+
     const probeId = '43963d6e-96fe-4b6a-a495-a683d332db31'
     const probe = items.find((x) => x.id === probeId)
     if (probe) {
-      // eslint-disable-next-line no-console
-      console.info('EventsPage: probe event found', { id: probe.id, rawCategory: (probe as any).category, mapped: mapCategory((probe as any).category) })
+      console.info('EventsPage: probe event found', {
+        id: probe.id,
+        rawCategory: (probe as any).category,
+        mapped: mapCategory((probe as any).category),
+      })
     }
+
     return { map, ungrouped }
   }
 
-  // Helper: prioritize categories using user prefs (category ids) if available
-  const prioritizeCategories = (all: Array<{ id: string | number; name: string }>, preferred: Array<string | number>) => {
+  const prioritizeCategories = (
+    all: Array<{ id: string | number; name: string }>,
+    preferred: Array<string | number>
+  ) => {
     const prefSet = new Set(preferred.map(String))
     const preferredOnTop = all.filter((c) => prefSet.has(String(c.id)))
     const others = all.filter((c) => !prefSet.has(String(c.id)))
@@ -167,49 +208,50 @@ const EventsPage: React.FC = () => {
   }
 
   const { categorySections } = useMemo(() => {
-    // Diagnostic: log event counts and sample ids to ensure we have data to group
-    // eslint-disable-next-line no-console
-    console.info('EventsPage: diagnostics', { totalEvents: (events || []).length, filteredCount: (filtered || []).length, sampleFilteredIds: (filtered || []).slice(0, 10).map(e => e.id) })
+    console.info('EventsPage: diagnostics', {
+      totalEvents: (events || []).length,
+      filteredCount: (filtered || []).length,
+      sampleFilteredIds: (filtered || []).slice(0, 10).map((e) => e.id),
+    })
 
-    const groupedResult = groupByCanonicalCategory(filtered)
+    const sorted = [...filtered].sort((a, b) => {
+      const aScore = (a as any).source === 'user_created' ? 0 : 1
+      const bScore = (b as any).source === 'user_created' ? 0 : 1
+      return aScore - bScore
+    })
+
+    const groupedResult = groupByCanonicalCategory(sorted)
     const grouped = groupedResult.map
     const ungroupedEvents = groupedResult.ungrouped
     const prioritized = prioritizeCategories(categories, preferredCategoryIds)
 
     const selectedIds = new Set<string>()
     const sections: Array<{ title: string; events: EventItem[]; totalCount: number }> = []
-    // track canonical keys for sections we've added so we don't accidentally
-    // suppress grouped buckets that match a preferred category via mapping
     const sectionKeysAdded = new Set<string>()
 
-    // If user has preferred categories, render a section for each preferred category (even if empty).
-    // All events from non-preferred categories (and unmapped events) go into the final "All Events".
     const prefSet = new Set(preferredCategoryIds.map(String))
     const preferredList = prioritized.filter((c) => prefSet.has(String(c.id)))
 
     if (preferredList.length > 0) {
-      // Render a section for each selected preference (empty sections allowed)
-      // Try multiple lookup strategies so display names (eg. "Outdoors & Nature")
-      // still match canonical mapped buckets (eg. "outdoors").
-      const normalizeDisplayName = (s: string) => String(s || '')
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '_')
-        .replace(/_+/g, '_')
-        .replace(/^_+|_+$/g, '')
+      const normalizeDisplayName = (s: string) =>
+        String(s || '')
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '_')
+          .replace(/_+/g, '_')
+          .replace(/^_+|_+$/g, '')
 
       const resolveBucket = (cat: { id: string | number; name: string }) => {
         const nameKey = normalizeDisplayName(String(cat.name))
-        // 1) direct normalized display-name match
         if (grouped[nameKey] && grouped[nameKey].length) return grouped[nameKey]
-        // 2) try mapping the display name to a canonical key (preferred)
+
         const mapped = mapCategory(String(cat.name))
-        if (mapped && grouped[String(mapped).toLowerCase()]) return grouped[String(mapped).toLowerCase()]
-        // 3) try fallback: raw lowercased display name
+        if (mapped && grouped[String(mapped).toLowerCase()]) {
+          return grouped[String(mapped).toLowerCase()]
+        }
+
         const rawName = String(cat.name).toLowerCase()
         if (grouped[rawName] && grouped[rawName].length) return grouped[rawName]
 
-        // no matches
-        // eslint-disable-next-line no-console
         console.info('EventsPage: resolveBucket no match for preference:', cat.name, 'mapped->', mapped)
         return [] as EventItem[]
       }
@@ -219,35 +261,39 @@ const EventsPage: React.FC = () => {
         const slice = bucket.slice(0, 4)
         for (const e of slice) selectedIds.add(e.id)
         sections.push({ title: String(cat.name), events: slice, totalCount: bucket.length })
-        // record canonical key for this preference (if possible) so later
-        // we can skip adding duplicate sections from grouped buckets
+
         const canonical = mapCategory(String(cat.name)) || normalizeDisplayName(String(cat.name))
         sectionKeysAdded.add(String(canonical).toLowerCase())
       }
-      // Do NOT render other categories separately; they will appear in remainingEvents
-    } else {
-      // No preferences selected: do not show category sections. All events will be shown in 'All Events'
     }
 
-    // Exclude my events and already selected events from remaining list
     const myEventIds = new Set(myEvents.map((m) => m.id))
     const remaining = filtered.filter((e) => !selectedIds.has(e.id) && !myEventIds.has(e.id))
 
-    // also append ungrouped events (unknown raw category mappings) to remaining
     for (const e of ungroupedEvents) {
-      if (!selectedIds.has(e.id) && !myEventIds.has(e.id) && !remaining.find(r => r.id === e.id)) {
+      if (!selectedIds.has(e.id) && !myEventIds.has(e.id) && !remaining.find((r) => r.id === e.id)) {
         remaining.push(e)
       }
     }
 
     return { categorySections: sections, remainingEvents: remaining }
-  }, [filtered, categories, preferredCategoryIds, myEvents])
+  }, [filtered, categories, preferredCategoryIds, myEvents, events])
+
+  const myEventsPreview = myEvents.slice(0, 4)
+  const hasMoreMyEvents = myEvents.length > 4
+
+  const joinedEventsPreview = joinedEvents.slice(0, 4)
+  const hasMoreJoinedEvents = joinedEvents.length > 4
+
+  const followingEventsPreview = followingEvents.slice(0, 4)
+  const hasMoreFollowingEvents = followingEvents.length > 4
 
   return (
     <PageWrapper>
       <MainContent>
         <div className="stack-vertical">
           <EventHero />
+
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Heading level={1}>Events</Heading>
             <div>
@@ -255,105 +301,211 @@ const EventsPage: React.FC = () => {
             </div>
           </div>
 
-          <EventFilters search={search} setSearch={(s) => { setSearch(s); setPage(1) }} location={location} setLocation={(l) => { setLocation(l); setPage(1) }} locations={locations} />
+          <EventFilters
+            search={search}
+            setSearch={(s) => {
+              setSearch(s)
+              setPage(1)
+            }}
+            location={location}
+            setLocation={(l) => {
+              setLocation(l)
+              setPage(1)
+            }}
+            locations={locations}
+          />
 
-          {/* Layout: optional sidebar of preferred categories (page 1 only) + main column */}
           <div className="events-with-sidebar">
             <div className="events-main">
               {page === 1 && categorySections.length > 0 ? (
                 <aside className="events-sidebar" aria-label="Categories">
                   <nav>
-                      <Heading level={3}>Categories</Heading>
-                      <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-                        {user ? (
-                          <>
-                            <li key="created-events-link" style={{ marginBottom: '8px' }}>
-                              <a href="#created-events" onClick={(ev) => {
+                    <Heading level={3}>Categories</Heading>
+                    <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                      {user ? (
+                        <>
+                          <li key="created-events-link" style={{ marginBottom: '8px' }}>
+                            <a
+                              href="#created-events"
+                              onClick={(ev) => {
                                 ev.preventDefault()
                                 const el = document.getElementById('created-events')
                                 if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                              }}>Created Events</a>
-                            </li>
-                            <li key="joined-events-link" style={{ marginBottom: '8px' }}>
-                              <a href="#joined-events" onClick={(ev) => {
+                              }}
+                            >
+                              Created Events
+                            </a>
+                          </li>
+
+                          <li key="joined-events-link" style={{ marginBottom: '8px' }}>
+                            <a
+                              href="#joined-events"
+                              onClick={(ev) => {
                                 ev.preventDefault()
                                 const el = document.getElementById('joined-events')
                                 if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                              }}>Joined Events</a>
-                            </li>
-                          </>
-                        ) : null}
+                              }}
+                            >
+                              Joined Events
+                            </a>
+                          </li>
 
-                        {categorySections.map((sec) => {
-                          const anchor = String(sec.title).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+/g, '-').replace(/^-+|-+$/g, '')
-                          return (
-                            <li key={anchor} style={{ marginBottom: '8px' }}>
-                              <a href={`#${anchor}`} onClick={(ev) => {
+                          <li key="following-events-link" style={{ marginBottom: '8px' }}>
+                            <a
+                              href="#following-events"
+                              onClick={(ev) => {
+                                ev.preventDefault()
+                                const el = document.getElementById('following-events')
+                                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                              }}
+                            >
+                              From People You Follow
+                            </a>
+                          </li>
+                        </>
+                      ) : null}
+
+                      {categorySections.map((sec) => {
+                        const anchor = String(sec.title)
+                          .toLowerCase()
+                          .replace(/[^a-z0-9]+/g, '-')
+                          .replace(/-+/g, '-')
+                          .replace(/^-+|-+$/g, '')
+
+                        return (
+                          <li key={anchor} style={{ marginBottom: '8px' }}>
+                            <a
+                              href={`#${anchor}`}
+                              onClick={(ev) => {
                                 ev.preventDefault()
                                 const el = document.getElementById(anchor)
                                 if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                              }}>{sec.title}</a>
-                            </li>
-                          )
-                        })}
-                      </ul>
-                    </nav>
+                              }}
+                            >
+                              {sec.title}
+                            </a>
+                          </li>
+                        )
+                      })}
+                    </ul>
+                  </nav>
                 </aside>
               ) : null}
 
               <div className="events-content">
+                {user && page === 1 && (
+                  <section style={{ marginBottom: '48px' }}>
+                    <Heading level={2} id="my-events">
+                      My Events
+                    </Heading>
 
-          {user && page === 1 && (
-            <section style={{ marginBottom: '48px' }}>
-              <Heading level={2} id="my-events">My Events</Heading>
+                    <Heading level={3} id="created-events">
+                      Created Events
+                    </Heading>
+                    {!myEventsLoading && myEvents.length === 0 && (
+                      <Text as="p">You haven't created any events yet.</Text>
+                    )}
+                    <EventGrid
+                      events={myEventsPreview}
+                      loading={myEventsLoading}
+                      onEventClick={handleEventClick}
+                    />
+                    {hasMoreMyEvents && (
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '20px' }}>
+                        <Button onClick={() => navigate('/events/all?section=created')}>
+                          View More
+                        </Button>
+                      </div>
+                    )}
 
-              <Heading level={3} id="created-events">Created Events</Heading>
-              {!myEventsLoading && myEvents.length === 0 && (
-                <Text as="p">You haven't created any events yet.</Text>
-              )}
-              <EventGrid events={myEvents} loading={myEventsLoading} onEventClick={handleEventClick} />
+                    <Heading level={3} id="joined-events" style={{ marginTop: 'var(--space-lg)' }}>
+                      Joined Events
+                    </Heading>
+                    {!joinedEventsLoading && joinedEvents.length === 0 && (
+                      <Text as="p">You haven't joined any events yet.</Text>
+                    )}
+                    <EventGrid
+                      events={joinedEventsPreview}
+                      loading={joinedEventsLoading}
+                      onEventClick={handleEventClick}
+                    />
+                    {hasMoreJoinedEvents && (
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '20px' }}>
+                        <Button onClick={() => navigate('/events/all?section=joined')}>
+                          View More
+                        </Button>
+                      </div>
+                    )}
 
-              <Heading level={3} id="joined-events" style={{ marginTop: 'var(--space-lg)' }}>Joined Events</Heading>
-              {!joinedEventsLoading && joinedEvents.length === 0 && (
-                <Text as="p">You haven't joined any events yet.</Text>
-              )}
-              <EventGrid events={joinedEvents} loading={joinedEventsLoading} onEventClick={handleEventClick} />
-            </section>
-          )}
+                    <Heading level={3} id="following-events" style={{ marginTop: 'var(--space-lg)' }}>
+                      From People You Follow
+                    </Heading>
+                    {!followingEventsLoading && followingEvents.length === 0 && (
+                      <Text as="p">No upcoming events from your friends.</Text>
+                    )}
+                    <EventGrid
+                      events={followingEventsPreview}
+                      loading={followingEventsLoading}
+                      onEventClick={handleEventClick}
+                    />
+                    {hasMoreFollowingEvents && (
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '20px' }}>
+                        <Button onClick={() => navigate('/events/all?section=following')}>
+                          View More
+                        </Button>
+                      </div>
+                    )}
+                  </section>
+                )}
 
-          {/* Category-based sections (up to 4 items each) */}
-          {loadingCategories ? (
-            <Text as="p">Loading personalized sections...</Text>
-          ) : null}
-          {page === 1 && categorySections.map((sec: any) => {
-            const anchor = String(sec.title).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+/g, '-').replace(/^-+|-+$/g, '')
-            const hasMore = sec.totalCount > sec.events.length
-            return (
-              <section id={anchor} key={sec.title} style={{ marginBottom: '48px' }}>
-                <Heading level={2} style={{ marginBottom: '20px' }}>{sec.title}</Heading>
-                <EventGrid events={sec.events} onEventClick={handleEventClick} />
-                {hasMore && (
-                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '20px' }}>
-                    <Button onClick={() => navigate(`/events/all?category=${encodeURIComponent(sec.title)}`)}>
-                      View More
-                    </Button>
+                {loadingCategories ? <Text as="p">Loading personalized sections...</Text> : null}
+
+                {page === 1 &&
+                  categorySections.map((sec: any) => {
+                    const anchor = String(sec.title)
+                      .toLowerCase()
+                      .replace(/[^a-z0-9]+/g, '-')
+                      .replace(/-+/g, '-')
+                      .replace(/^-+|-+$/g, '')
+
+                    const hasMore = sec.totalCount > sec.events.length
+
+                    return (
+                      <section id={anchor} key={sec.title} style={{ marginBottom: '48px' }}>
+                        <Heading level={2} style={{ marginBottom: '20px' }}>
+                          {sec.title}
+                        </Heading>
+                        <EventGrid events={sec.events} onEventClick={handleEventClick} />
+                        {hasMore && (
+                          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '20px' }}>
+                            <Button
+                              onClick={() =>
+                                navigate(`/events/all?category=${encodeURIComponent(sec.title)}`)
+                              }
+                            >
+                              View More
+                            </Button>
+                          </div>
+                        )}
+                      </section>
+                    )
+                  })}
+
+                {categorySections.length > 0 && (
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'center',
+                      marginTop: '32px',
+                      marginBottom: '32px',
+                    }}
+                  >
+                    <Button onClick={() => navigate('/events/all')}>View All Events</Button>
                   </div>
                 )}
-              </section>
-            )
-          })}
-
-          {/* View All Events Button */}
-          {categorySections.length > 0 && (
-            <div style={{ display: 'flex', justifyContent: 'center', marginTop: '32px', marginBottom: '32px' }}>
-              <Button onClick={() => navigate('/events/all')}>
-                View All Events
-              </Button>
+              </div>
             </div>
-          )}
-        </div>
-        </div>
-        </div>
+          </div>
         </div>
       </MainContent>
     </PageWrapper>

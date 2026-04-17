@@ -65,6 +65,7 @@ class EventCreate(BaseModel):
     capacity: Optional[int] = None
     close_date: Optional[datetime] = None
     fee: Optional[int] = 0
+    category: Optional[str] = None  # Added category field
 
 @router.post("/create")
 async def create(event: EventCreate, current_user: dict = Depends(get_current_user)):
@@ -91,6 +92,7 @@ async def create(event: EventCreate, current_user: dict = Depends(get_current_us
                 'capacity': event.capacity,
                 'close_date': event.close_date,
                 'fee': event.fee,
+                'category': event.category,  # Added category
             })
             row = result.mappings().fetchone()
             connection.commit()
@@ -236,6 +238,39 @@ async def get_attendees(event_id: str):
     ]
 
 
+@router.get("/following")
+async def get_following_events(current_user: dict = Depends(get_current_user)):
+    sql_helper = SQLHelper()
+    print("user is " + current_user["user_id"])
+    try:
+        query = sql_helper.load_query("sql_queries/get_following_events.sql")
+        with engine.connect() as connection:
+            result = connection.execute(query, {'user_id': current_user["user_id"]})
+            rows = result.mappings().fetchall()
+    except Exception as e:
+        print("FOLLOWING EVENTS ERROR:", repr(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Database error: {str(e)}"
+        )
+    items = []
+    for r in rows:
+        loc_name = r.get('location_name')
+        loc_addr = r.get('location_address')
+        location = f"{loc_name}, {loc_addr}" if loc_name and loc_addr else loc_name or loc_addr or None
+        items.append({
+            'id': str(r.get('id')),
+            'title': r.get('title'),
+            'date': _iso_str(r.get('start_time')),
+            'location': location,
+            'description': r.get('description'),
+            'thumbnail': r.get('image_url'),
+            'category': r.get('category'),
+            'source': 'user_created',
+        })
+
+    return items
+
 @router.get("/{event_id}")
 async def get_event(event_id: str, current_user: Optional[dict] = Depends(get_optional_current_user)):
     sql_helper = SQLHelper()
@@ -299,8 +334,9 @@ async def get_event(event_id: str, current_user: Optional[dict] = Depends(get_op
         'currentCapacity': event_option_attendee_count if event_option_attendee_count is not None else row.get('current_capacity'),
         'closeDate': _iso_str(row.get('close_date')),
         'isAttending': is_attending,
-        'category': row.get('category'),  # Added category to the event object
+        'category': row.get('category'),
     }
+
 
 @router.delete("/{event_id}")
 async def delete_event(event_id: str, current_user: dict = Depends(get_current_user)):
@@ -353,18 +389,14 @@ async def get_user_events(user_id: str, current_user: dict = Depends(get_current
             'location': location,
             'description': r.get('description'),
             'thumbnail': r.get('image_url'),
-            'category': r.get('category') if 'category' in r.keys() else None,  # Added category to the event object
+            'category': r.get('category') if 'category' in r.keys() else None,
         })
 
     return items
 
-
 @router.get("")
 @router.get("/")
 async def list_events(current_user: dict = Depends(get_current_user)):
-    """List combined events from external `event_options` and user `events`.
-    Returns a list of mapped objects matching frontend `EventItem` shape.
-    """
     sql_helper = SQLHelper()
     try:
         q1 = sql_helper.load_query("sql_queries/select_event_options.sql")
@@ -382,14 +414,11 @@ async def list_events(current_user: dict = Depends(get_current_user)):
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Database error: {str(e)}")
 
     items = []
-    for r in list(r1) + list(r2):
+
+    for r in r1:
         loc_name = r.get('location_name')
         loc_addr = r.get('location_address')
-        if loc_name and loc_addr:
-            location = f"{loc_name}, {loc_addr}"
-        else:
-            location = loc_name or loc_addr or None
-
+        location = f"{loc_name}, {loc_addr}" if loc_name and loc_addr else loc_name or loc_addr or None
         items.append({
             'id': str(r.get('id')),
             'title': r.get('title'),
@@ -398,6 +427,22 @@ async def list_events(current_user: dict = Depends(get_current_user)):
             'category': r.get('category') if 'category' in r.keys() else None,
             'description': r.get('description'),
             'thumbnail': r.get('image_url'),
+            'source': 'event_option',
+        })
+
+    for r in r2:
+        loc_name = r.get('location_name')
+        loc_addr = r.get('location_address')
+        location = f"{loc_name}, {loc_addr}" if loc_name and loc_addr else loc_name or loc_addr or None
+        items.append({
+            'id': str(r.get('id')),
+            'title': r.get('title'),
+            'date': _iso_str(r.get('start_time')),
+            'location': location,
+            'category': r.get('category') if 'category' in r.keys() else None,
+            'description': r.get('description'),
+            'thumbnail': r.get('image_url'),
+            'source': 'user_created',  # <-- user-created events
         })
 
     return items
@@ -428,6 +473,7 @@ async def modify_event(event_id: str, event: EventCreate, current_user: dict = D
                 'capacity': event.capacity,
                 'close_date': event.close_date,
                 'fee': event.fee,
+                'category': event.category,
             })
             row = result.mappings().fetchone()
             connection.commit()
@@ -444,7 +490,3 @@ async def modify_event(event_id: str, event: EventCreate, current_user: dict = D
         )
 
     return {"message": "Event updated successfully", "event_id": str(row['id'])}
-
-@router.get("/{user_id}/eventOptions")
-async def get_event_options(user_id: str):
-    pass
